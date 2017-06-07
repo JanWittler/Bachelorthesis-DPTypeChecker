@@ -1,0 +1,3 @@
+[submodule "BNFC_CToSwift"]
+	path = BNFC_CToSwift
+	url = git@github.com:JanWittler/Bachelorthesis-BNFC_CToSwift.git
