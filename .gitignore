@@ -1,5 +1,8 @@
 DPTypeChecker/AbstractSyntax.swift
 DPTypeChecker/CGrammarToSwiftBridge.swift
+CGrammar/*.o
+CGrammar/*.l
+CGrammar/*.y
 CGrammar/Absyn.h
 CGrammar/Absyn.c
 CGrammar/Printer.h
@@ -7,3 +10,8 @@ CGrammar/Printer.c
 CGrammar/Parser.h
 CGrammar/Parser.c
 CGrammar/Lexer.c
+CGrammar/Skeleton.h
+CGrammar/Skeleton.c
+CGrammar/Test.c
+CGrammar/TestCPP
+CGrammar/Makefile
