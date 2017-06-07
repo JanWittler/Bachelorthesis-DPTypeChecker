@@ -1,4 +1,4 @@
-DPTypeChecker/Absyn.swift
+DPTypeChecker/AbstractSyntax.swift
 DPTypeChecker/CGrammarToSwiftBridge.swift
 CGrammar/Absyn.h
 CGrammar/Absyn.c

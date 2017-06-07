@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2A9BA9641EE8029A00BE2F00 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA9631EE8029A00BE2F00 /* main.swift */; };
-		2A9BA96C1EE802AA00BE2F00 /* Absyn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA96A1EE802AA00BE2F00 /* Absyn.swift */; };
+		2A9BA96C1EE802AA00BE2F00 /* AbstractSyntax.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */; };
 		2A9BA96D1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA96B1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift */; };
 		2A9BA9771EE802D500BE2F00 /* CGrammar.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A9BA9751EE802D500BE2F00 /* CGrammar.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2A9BA97B1EE802DA00BE2F00 /* CGrammar.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A9BA9731EE802D500BE2F00 /* CGrammar.framework */; };
@@ -36,7 +36,7 @@
 /* Begin PBXFileReference section */
 		2A9BA9601EE8029A00BE2F00 /* DPTypeChecker */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = DPTypeChecker; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A9BA9631EE8029A00BE2F00 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		2A9BA96A1EE802AA00BE2F00 /* Absyn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Absyn.swift; sourceTree = "<group>"; };
+		2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AbstractSyntax.swift; sourceTree = "<group>"; };
 		2A9BA96B1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CGrammarToSwiftBridge.swift; sourceTree = "<group>"; };
 		2A9BA9731EE802D500BE2F00 /* CGrammar.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CGrammar.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A9BA9751EE802D500BE2F00 /* CGrammar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CGrammar.h; sourceTree = "<group>"; };
@@ -91,7 +91,7 @@
 			isa = PBXGroup;
 			children = (
 				2A9BA9631EE8029A00BE2F00 /* main.swift */,
-				2A9BA96A1EE802AA00BE2F00 /* Absyn.swift */,
+				2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */,
 				2A9BA96B1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift */,
 			);
 			path = DPTypeChecker;
@@ -222,7 +222,7 @@
 			files = (
 				2A9BA9641EE8029A00BE2F00 /* main.swift in Sources */,
 				2A9BA96D1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift in Sources */,
-				2A9BA96C1EE802AA00BE2F00 /* Absyn.swift in Sources */,
+				2A9BA96C1EE802AA00BE2F00 /* AbstractSyntax.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
