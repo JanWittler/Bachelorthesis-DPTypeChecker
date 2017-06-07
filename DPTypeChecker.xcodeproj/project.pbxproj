@@ -8,6 +8,17 @@
 
 /* Begin PBXBuildFile section */
 		2A9BA9641EE8029A00BE2F00 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA9631EE8029A00BE2F00 /* main.swift */; };
+		2A9BA96C1EE802AA00BE2F00 /* Absyn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA96A1EE802AA00BE2F00 /* Absyn.swift */; };
+		2A9BA96D1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA96B1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift */; };
+		2A9BA9771EE802D500BE2F00 /* CGrammar.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A9BA9751EE802D500BE2F00 /* CGrammar.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		2A9BA97B1EE802DA00BE2F00 /* CGrammar.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A9BA9731EE802D500BE2F00 /* CGrammar.framework */; };
+		2A9BA9831EE802EB00BE2F00 /* Absyn.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA97C1EE802EB00BE2F00 /* Absyn.c */; };
+		2A9BA9841EE802EB00BE2F00 /* Absyn.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A9BA97D1EE802EB00BE2F00 /* Absyn.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		2A9BA9851EE802EB00BE2F00 /* Lexer.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA97E1EE802EB00BE2F00 /* Lexer.c */; };
+		2A9BA9861EE802EB00BE2F00 /* Parser.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA97F1EE802EB00BE2F00 /* Parser.c */; };
+		2A9BA9871EE802EB00BE2F00 /* Parser.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A9BA9801EE802EB00BE2F00 /* Parser.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		2A9BA9881EE802EB00BE2F00 /* Printer.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA9811EE802EB00BE2F00 /* Printer.c */; };
+		2A9BA9891EE802EB00BE2F00 /* Printer.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A9BA9821EE802EB00BE2F00 /* Printer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,10 +36,30 @@
 /* Begin PBXFileReference section */
 		2A9BA9601EE8029A00BE2F00 /* DPTypeChecker */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = DPTypeChecker; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A9BA9631EE8029A00BE2F00 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		2A9BA96A1EE802AA00BE2F00 /* Absyn.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Absyn.swift; sourceTree = "<group>"; };
+		2A9BA96B1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CGrammarToSwiftBridge.swift; sourceTree = "<group>"; };
+		2A9BA9731EE802D500BE2F00 /* CGrammar.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CGrammar.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		2A9BA9751EE802D500BE2F00 /* CGrammar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CGrammar.h; sourceTree = "<group>"; };
+		2A9BA9761EE802D500BE2F00 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2A9BA97C1EE802EB00BE2F00 /* Absyn.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Absyn.c; sourceTree = "<group>"; };
+		2A9BA97D1EE802EB00BE2F00 /* Absyn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Absyn.h; sourceTree = "<group>"; };
+		2A9BA97E1EE802EB00BE2F00 /* Lexer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Lexer.c; sourceTree = "<group>"; };
+		2A9BA97F1EE802EB00BE2F00 /* Parser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Parser.c; sourceTree = "<group>"; };
+		2A9BA9801EE802EB00BE2F00 /* Parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Parser.h; sourceTree = "<group>"; };
+		2A9BA9811EE802EB00BE2F00 /* Printer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Printer.c; sourceTree = "<group>"; };
+		2A9BA9821EE802EB00BE2F00 /* Printer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Printer.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		2A9BA95D1EE8029A00BE2F00 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A9BA97B1EE802DA00BE2F00 /* CGrammar.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2A9BA96F1EE802D500BE2F00 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -42,6 +73,7 @@
 			isa = PBXGroup;
 			children = (
 				2A9BA9621EE8029A00BE2F00 /* DPTypeChecker */,
+				2A9BA9741EE802D500BE2F00 /* CGrammar */,
 				2A9BA9611EE8029A00BE2F00 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -50,6 +82,7 @@
 			isa = PBXGroup;
 			children = (
 				2A9BA9601EE8029A00BE2F00 /* DPTypeChecker */,
+				2A9BA9731EE802D500BE2F00 /* CGrammar.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -58,11 +91,43 @@
 			isa = PBXGroup;
 			children = (
 				2A9BA9631EE8029A00BE2F00 /* main.swift */,
+				2A9BA96A1EE802AA00BE2F00 /* Absyn.swift */,
+				2A9BA96B1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift */,
 			);
 			path = DPTypeChecker;
 			sourceTree = "<group>";
 		};
+		2A9BA9741EE802D500BE2F00 /* CGrammar */ = {
+			isa = PBXGroup;
+			children = (
+				2A9BA9751EE802D500BE2F00 /* CGrammar.h */,
+				2A9BA97D1EE802EB00BE2F00 /* Absyn.h */,
+				2A9BA97C1EE802EB00BE2F00 /* Absyn.c */,
+				2A9BA97E1EE802EB00BE2F00 /* Lexer.c */,
+				2A9BA9801EE802EB00BE2F00 /* Parser.h */,
+				2A9BA97F1EE802EB00BE2F00 /* Parser.c */,
+				2A9BA9821EE802EB00BE2F00 /* Printer.h */,
+				2A9BA9811EE802EB00BE2F00 /* Printer.c */,
+				2A9BA9761EE802D500BE2F00 /* Info.plist */,
+			);
+			path = CGrammar;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		2A9BA9701EE802D500BE2F00 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A9BA9871EE802EB00BE2F00 /* Parser.h in Headers */,
+				2A9BA9841EE802EB00BE2F00 /* Absyn.h in Headers */,
+				2A9BA9771EE802D500BE2F00 /* CGrammar.h in Headers */,
+				2A9BA9891EE802EB00BE2F00 /* Printer.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
 		2A9BA95F1EE8029A00BE2F00 /* DPTypeChecker */ = {
@@ -82,6 +147,24 @@
 			productReference = 2A9BA9601EE8029A00BE2F00 /* DPTypeChecker */;
 			productType = "com.apple.product-type.tool";
 		};
+		2A9BA9721EE802D500BE2F00 /* CGrammar */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2A9BA97A1EE802D500BE2F00 /* Build configuration list for PBXNativeTarget "CGrammar" */;
+			buildPhases = (
+				2A9BA96E1EE802D500BE2F00 /* Sources */,
+				2A9BA96F1EE802D500BE2F00 /* Frameworks */,
+				2A9BA9701EE802D500BE2F00 /* Headers */,
+				2A9BA9711EE802D500BE2F00 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CGrammar;
+			productName = CGrammar;
+			productReference = 2A9BA9731EE802D500BE2F00 /* CGrammar.framework */;
+			productType = "com.apple.product-type.framework";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -93,6 +176,11 @@
 				ORGANIZATIONNAME = "Jan Wittler";
 				TargetAttributes = {
 					2A9BA95F1EE8029A00BE2F00 = {
+						CreatedOnToolsVersion = 8.3.2;
+						DevelopmentTeam = BYS7D5JGQJ;
+						ProvisioningStyle = Automatic;
+					};
+					2A9BA9721EE802D500BE2F00 = {
 						CreatedOnToolsVersion = 8.3.2;
 						DevelopmentTeam = BYS7D5JGQJ;
 						ProvisioningStyle = Automatic;
@@ -112,9 +200,20 @@
 			projectRoot = "";
 			targets = (
 				2A9BA95F1EE8029A00BE2F00 /* DPTypeChecker */,
+				2A9BA9721EE802D500BE2F00 /* CGrammar */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2A9BA9711EE802D500BE2F00 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		2A9BA95C1EE8029A00BE2F00 /* Sources */ = {
@@ -122,6 +221,19 @@
 			buildActionMask = 2147483647;
 			files = (
 				2A9BA9641EE8029A00BE2F00 /* main.swift in Sources */,
+				2A9BA96D1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift in Sources */,
+				2A9BA96C1EE802AA00BE2F00 /* Absyn.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2A9BA96E1EE802D500BE2F00 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A9BA9851EE802EB00BE2F00 /* Lexer.c in Sources */,
+				2A9BA9831EE802EB00BE2F00 /* Absyn.c in Sources */,
+				2A9BA9881EE802EB00BE2F00 /* Printer.c in Sources */,
+				2A9BA9861EE802EB00BE2F00 /* Parser.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -236,6 +348,56 @@
 			};
 			name = Release;
 		};
+		2A9BA9781EE802D500BE2F00 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = BYS7D5JGQJ;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				INFOPLIST_FILE = CGrammar/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = de.wittlerDev.CGrammar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 3.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		2A9BA9791EE802D500BE2F00 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = BYS7D5JGQJ;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				INFOPLIST_FILE = CGrammar/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = de.wittlerDev.CGrammar;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 3.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -253,6 +415,15 @@
 			buildConfigurations = (
 				2A9BA9681EE8029A00BE2F00 /* Debug */,
 				2A9BA9691EE8029A00BE2F00 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2A9BA97A1EE802D500BE2F00 /* Build configuration list for PBXNativeTarget "CGrammar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A9BA9781EE802D500BE2F00 /* Debug */,
+				2A9BA9791EE802D500BE2F00 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
