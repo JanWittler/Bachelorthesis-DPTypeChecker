@@ -3,6 +3,7 @@ DPTypeChecker/CGrammarToSwiftBridge.swift
 CGrammar/*.o
 CGrammar/*.l
 CGrammar/*.y
+CGrammar/*.bak
 CGrammar/Absyn.h
 CGrammar/Absyn.c
 CGrammar/Printer.h
