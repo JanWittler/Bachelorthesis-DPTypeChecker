@@ -20,6 +20,7 @@
 		2A9BA9871EE802EB00BE2F00 /* Parser.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A9BA9801EE802EB00BE2F00 /* Parser.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2A9BA9881EE802EB00BE2F00 /* Printer.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA9811EE802EB00BE2F00 /* Printer.c */; };
 		2A9BA9891EE802EB00BE2F00 /* Printer.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A9BA9821EE802EB00BE2F00 /* Printer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		2AA9D9111EE96F990078ABCF /* TypeChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA9D9101EE96F990078ABCF /* TypeChecker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -50,6 +51,7 @@
 		2A9BA9801EE802EB00BE2F00 /* Parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Parser.h; sourceTree = "<group>"; };
 		2A9BA9811EE802EB00BE2F00 /* Printer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Printer.c; sourceTree = "<group>"; };
 		2A9BA9821EE802EB00BE2F00 /* Printer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Printer.h; sourceTree = "<group>"; };
+		2AA9D9101EE96F990078ABCF /* TypeChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeChecker.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +95,7 @@
 			isa = PBXGroup;
 			children = (
 				2A9BA9631EE8029A00BE2F00 /* main.swift */,
+				2AA9D9101EE96F990078ABCF /* TypeChecker.swift */,
 				2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */,
 				2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */,
 				2A9BA96B1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift */,
@@ -227,6 +230,7 @@
 				2A9BA96D1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift in Sources */,
 				2A9BA96C1EE802AA00BE2F00 /* AbstractSyntax.swift in Sources */,
 				2A74E7F41EE9D71800C4D566 /* AbSyn+Extensions.swift in Sources */,
+				2AA9D9111EE96F990078ABCF /* TypeChecker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
