@@ -1,5 +1,5 @@
 cToSwiftFolder := ./BNFC_CToSwift/
-grammar := CPP.cf
+grammar := Grammar.cf
 
 all: build
 

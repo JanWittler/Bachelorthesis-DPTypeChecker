@@ -14,5 +14,5 @@ CGrammar/Lexer.c
 CGrammar/Skeleton.h
 CGrammar/Skeleton.c
 CGrammar/Test.c
-CGrammar/TestCPP
+CGrammar/TestGrammar
 CGrammar/Makefile
