@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2A74E7F41EE9D71800C4D566 /* AbSyn+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */; };
 		2A9BA9641EE8029A00BE2F00 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA9631EE8029A00BE2F00 /* main.swift */; };
 		2A9BA96C1EE802AA00BE2F00 /* AbstractSyntax.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */; };
 		2A9BA96D1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA96B1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift */; };
@@ -34,6 +35,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "AbSyn+Extensions.swift"; sourceTree = "<group>"; };
 		2A9BA9601EE8029A00BE2F00 /* DPTypeChecker */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = DPTypeChecker; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A9BA9631EE8029A00BE2F00 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AbstractSyntax.swift; sourceTree = "<group>"; };
@@ -92,6 +94,7 @@
 			children = (
 				2A9BA9631EE8029A00BE2F00 /* main.swift */,
 				2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */,
+				2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */,
 				2A9BA96B1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift */,
 			);
 			path = DPTypeChecker;
@@ -223,6 +226,7 @@
 				2A9BA9641EE8029A00BE2F00 /* main.swift in Sources */,
 				2A9BA96D1EE802AA00BE2F00 /* CGrammarToSwiftBridge.swift in Sources */,
 				2A9BA96C1EE802AA00BE2F00 /* AbstractSyntax.swift in Sources */,
+				2A74E7F41EE9D71800C4D566 /* AbSyn+Extensions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -426,6 +430,7 @@
 				2A9BA9791EE802D500BE2F00 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
