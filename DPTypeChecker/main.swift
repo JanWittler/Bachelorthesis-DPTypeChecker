@@ -22,8 +22,16 @@ guard let parse_tree = parse_tree else {
 }
 
 let swiftTree = CGrammarToSwiftBridge().visitProgram(parse_tree)
-print("Parse Successful!")
+print("Parse successful!")
 print("\n[Abstract Syntax]")
 print(swiftTree.show())
 print("\n[Linearized Tree]")
 print(Swift.String(cString: printProgram(parse_tree)))
+
+do {
+    try typeCheck(swiftTree)
+    print("\nType-check successful!")
+}
+catch let error as TypeCheckerError {
+    print("\nType-check failed with error:\n\(error)")
+}
