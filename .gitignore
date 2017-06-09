@@ -1,5 +1,5 @@
 DPTypeChecker/AbstractSyntax.swift
-DPTypeChecker/CGrammarToSwiftBridge.swift
+DPTypeChecker/Parser.swift
 CGrammar/*.o
 CGrammar/*.l
 CGrammar/*.y

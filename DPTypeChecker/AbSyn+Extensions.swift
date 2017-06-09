@@ -45,7 +45,8 @@ extension InternalType: Equatable {
             return true
         case (let .iTMulPair(pair1), let .iTMulPair(pair2)) where pair1 == pair2:
             return true
-        default: return false
+        default:
+            return false
         }
     }
 }
@@ -53,7 +54,7 @@ extension InternalType: Equatable {
 //MARK: Type printing
 
 extension Type: CustomStringConvertible {
-    var description: String {
+    public var description: String {
         return "Type(\(internalDescription))"
     }
     
@@ -64,7 +65,7 @@ extension Type: CustomStringConvertible {
 }
 
 extension InternalType: CustomStringConvertible {
-    var description: String {
+    public var description: String {
         switch self {
         case let .iTBase(bType):
             return bType.description
@@ -75,7 +76,7 @@ extension InternalType: CustomStringConvertible {
 }
 
 extension BaseType: CustomStringConvertible {
-    var description: String {
+    public var description: String {
         switch self {
         case .int:
             return "Int"

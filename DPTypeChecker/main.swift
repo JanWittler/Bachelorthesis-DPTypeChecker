@@ -7,29 +7,23 @@
 //
 
 import Foundation
-import CGrammar
 
-let parse_tree: CGrammar.Program?
-if CommandLine.argc > 1, let file = fopen(CommandLine.arguments[1], "r") {
-    parse_tree = pProgram(file)
-}
-else {
-    parse_tree = pProgram(stdin)
-}
-
-guard let parse_tree = parse_tree else {
+guard CommandLine.argc > 1 else {
+    print("missing argument")
     exit(1)
 }
 
-let swiftTree = CGrammarToSwiftBridge().visitProgram(parse_tree)
+guard let parseTree = parseFile(at: CommandLine.arguments[1]) else {
+    print("could not parse file at path '\(CommandLine.arguments[1])'")
+    exit(1)
+}
+
 print("Parse successful!")
 print("\n[Abstract Syntax]")
-print(swiftTree.show())
-print("\n[Linearized Tree]")
-print(Swift.String(cString: printProgram(parse_tree)))
+print(parseTree.show())
 
 do {
-    try typeCheck(swiftTree)
+    try typeCheck(parseTree)
     print("\nType-check successful!")
 }
 catch let error as TypeCheckerError {
