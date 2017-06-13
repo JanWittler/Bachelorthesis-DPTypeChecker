@@ -15,12 +15,12 @@ coercions Exp 15 ;
 
 ATypeEqual. Assertion ::= "assertTypeEqual" "(" Id "," Type ")" ;
 
-TType. 				 Type ::= InternalType "!" Double ;
-TTypeInf. 		 	 Type ::= InternalType "!" "inf" ;
-TTypeConvenienceInt. Type ::= InternalType "!" Integer ;
+TType. 				 Type ::= CoreType "!" Double ;
+TTypeExponential.  	 Type ::= CoreType "!" "inf" ;
+TTypeConvenienceInt. Type ::= CoreType "!" Integer ;
 
-ITBase.    InternalType ::= BaseType ;
-ITMulPair. InternalType ::= "(" Type "," Type ")" ;
+CTBase.    CoreType ::= BaseType ;
+CTMulPair. CoreType ::= "(" Type "," Type ")" ;
 
 rules BaseType ::= "Int" ;
 

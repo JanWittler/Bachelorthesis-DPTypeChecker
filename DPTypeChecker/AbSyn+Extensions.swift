@@ -17,19 +17,19 @@ extension Type {
             return rCount
         case let .tTypeConvenienceInt(_ ,rCount):
             return Double(rCount)
-        case .tTypeInf(_):
+        case .tTypeExponential(_):
             return Double.infinity
         }
     }
     
-    var internalType: InternalType {
+    var coreType: CoreType {
         switch self {
-        case let .tType(iType, _):
-            return iType
-        case let .tTypeConvenienceInt(iType, _):
-            return iType
-        case let .tTypeInf(iType):
-            return iType
+        case let .tType(cType, _):
+            return cType
+        case let .tTypeConvenienceInt(cType, _):
+            return cType
+        case let .tTypeExponential(cType):
+            return cType
         }
     }
 }
@@ -42,10 +42,10 @@ extension Type {
         guard replicationCount <= other.replicationCount else {
             return false
         }
-        switch (self.internalType, other.internalType) {
-        case (let .iTBase(bType1), let .iTBase(bType2)):
+        switch (self.coreType, other.coreType) {
+        case (let .cTBase(bType1), let .cTBase(bType2)):
             return bType1 == bType2
-        case (let .iTMulPair(pair1), let .iTMulPair(pair2)):
+        case (let .cTMulPair(pair1), let .cTMulPair(pair2)):
             return pair1.0.isSubtype(of:pair2.0) && pair1.1.isSubtype(of:pair2.1)
         default:
             return false
@@ -57,16 +57,16 @@ extension Type {
 
 extension Type: Equatable {
     public static func ==(lhs: Type, rhs: Type) -> Bool {
-        return lhs.replicationCount == rhs.replicationCount && lhs.internalType == rhs.internalType
+        return lhs.replicationCount == rhs.replicationCount && lhs.coreType == rhs.coreType
     }
 }
 
-extension InternalType: Equatable {
-    public static func ==(lhs: InternalType, rhs: InternalType) -> Bool {
+extension CoreType: Equatable {
+    public static func ==(lhs: CoreType, rhs: CoreType) -> Bool {
         switch (lhs, rhs) {
-        case (let .iTBase(bType1), let .iTBase(bType2)) where bType1 == bType2:
+        case (let .cTBase(bType1), let .cTBase(bType2)) where bType1 == bType2:
             return true
-        case (let .iTMulPair(pair1), let .iTMulPair(pair2)) where pair1 == pair2:
+        case (let .cTMulPair(pair1), let .cTMulPair(pair2)) where pair1 == pair2:
             return true
         default:
             return false
@@ -83,16 +83,16 @@ extension Type: CustomStringConvertible {
     
     fileprivate var internalDescription: String {
         let countString = replicationCount.remainder(dividingBy: 1) == 0 ? String(format: "%.0f", replicationCount) : "\(replicationCount)"
-        return "\(internalType)!\(countString)"
+        return "\(coreType)!\(countString)"
     }
 }
 
-extension InternalType: CustomStringConvertible {
+extension CoreType: CustomStringConvertible {
     public var description: String {
         switch self {
-        case let .iTBase(bType):
+        case let .cTBase(bType):
             return bType.description
-        case let .iTMulPair(t1, t2):
+        case let .cTMulPair(t1, t2):
             return "(\(t1.internalDescription), \(t2.internalDescription))"
         }
     }

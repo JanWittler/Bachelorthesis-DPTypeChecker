@@ -92,7 +92,7 @@ private struct Context {
         guard newRCount >= 0 else {
             throw TypeCheckerError.invalidVariableAccess(id)
         }
-        let newType = Type.tType(type.internalType, newRCount)
+        let newType = Type.tType(type.coreType, newRCount)
         values[id] = newType
     }
     
@@ -133,16 +133,16 @@ private func checkStm(_ stm: Stm) throws {
 private func inferType(_ exp: Exp) throws -> Type {
     switch exp {
     case .eInt(_):
-        return .tType(.iTBase(.int), .infinity)
+        return .tType(.cTBase(.int), .infinity)
     case let .eId(id):
         let type = try environment.lookup(id)
-        let returnType = Type.tType(type.internalType, 1)
+        let returnType = Type.tType(type.coreType, 1)
         try environment.updateReplicationCount(for: id, delta: returnType.replicationCount)
         return returnType
     case let .ePair(e1, e2):
         let type1 = try inferType(e1)
         let type2 = try inferType(e2)
-        return .tType(.iTMulPair(type1, type2), 1)
+        return .tType(.cTMulPair(type1, type2), 1)
     case let .eTyped(_, type):
         //TODO: for now this is accepted to get types where inferencing does not work yet but should be removed as soon as possible
         return type
