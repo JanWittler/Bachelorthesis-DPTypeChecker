@@ -28,4 +28,5 @@ do {
 }
 catch let error as TypeCheckerError {
     print("\nType-check failed with error:\n\(error)")
+    exit(1)
 }
