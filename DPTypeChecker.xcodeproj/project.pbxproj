@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2A142E6E1EEFE64C00FA8787 /* DPTypeCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A142E6D1EEFE64C00FA8787 /* DPTypeCheckerTests.swift */; };
+		2A142E731EEFE65A00FA8787 /* CGrammar.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A9BA9731EE802D500BE2F00 /* CGrammar.framework */; };
+		2A142E741EEFE66000FA8787 /* TypeChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA9D9101EE96F990078ABCF /* TypeChecker.swift */; };
+		2A142E751EEFE66400FA8787 /* AbstractSyntax.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */; };
+		2A142E761EEFE66400FA8787 /* AbSyn+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */; };
+		2A142E771EEFE66400FA8787 /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA139581EEAAC2800389C66 /* Parser.swift */; };
 		2A74E7F41EE9D71800C4D566 /* AbSyn+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */; };
 		2A9BA9641EE8029A00BE2F00 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA9631EE8029A00BE2F00 /* main.swift */; };
 		2A9BA96C1EE802AA00BE2F00 /* AbstractSyntax.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */; };
@@ -36,6 +42,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2A142E6B1EEFE64C00FA8787 /* DPTypeCheckerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DPTypeCheckerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2A142E6D1EEFE64C00FA8787 /* DPTypeCheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DPTypeCheckerTests.swift; sourceTree = "<group>"; };
+		2A142E6F1EEFE64C00FA8787 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "AbSyn+Extensions.swift"; sourceTree = "<group>"; };
 		2A9BA9601EE8029A00BE2F00 /* DPTypeChecker */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = DPTypeChecker; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A9BA9631EE8029A00BE2F00 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -55,6 +64,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		2A142E681EEFE64C00FA8787 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A142E731EEFE65A00FA8787 /* CGrammar.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2A9BA95D1EE8029A00BE2F00 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -73,11 +90,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2A142E6C1EEFE64C00FA8787 /* DPTypeCheckerTests */ = {
+			isa = PBXGroup;
+			children = (
+				2A142E6D1EEFE64C00FA8787 /* DPTypeCheckerTests.swift */,
+				2A142E6F1EEFE64C00FA8787 /* Info.plist */,
+			);
+			path = DPTypeCheckerTests;
+			sourceTree = "<group>";
+		};
 		2A9BA9571EE8029A00BE2F00 = {
 			isa = PBXGroup;
 			children = (
 				2A9BA9621EE8029A00BE2F00 /* DPTypeChecker */,
 				2A9BA9741EE802D500BE2F00 /* CGrammar */,
+				2A142E6C1EEFE64C00FA8787 /* DPTypeCheckerTests */,
 				2A9BA9611EE8029A00BE2F00 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -87,6 +114,7 @@
 			children = (
 				2A9BA9601EE8029A00BE2F00 /* DPTypeChecker */,
 				2A9BA9731EE802D500BE2F00 /* CGrammar.framework */,
+				2A142E6B1EEFE64C00FA8787 /* DPTypeCheckerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -136,6 +164,23 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		2A142E6A1EEFE64C00FA8787 /* DPTypeCheckerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2A142E721EEFE64C00FA8787 /* Build configuration list for PBXNativeTarget "DPTypeCheckerTests" */;
+			buildPhases = (
+				2A142E671EEFE64C00FA8787 /* Sources */,
+				2A142E681EEFE64C00FA8787 /* Frameworks */,
+				2A142E691EEFE64C00FA8787 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DPTypeCheckerTests;
+			productName = DPTypeCheckerTests;
+			productReference = 2A142E6B1EEFE64C00FA8787 /* DPTypeCheckerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		2A9BA95F1EE8029A00BE2F00 /* DPTypeChecker */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 2A9BA9671EE8029A00BE2F00 /* Build configuration list for PBXNativeTarget "DPTypeChecker" */;
@@ -181,6 +226,11 @@
 				LastUpgradeCheck = 0830;
 				ORGANIZATIONNAME = "Jan Wittler";
 				TargetAttributes = {
+					2A142E6A1EEFE64C00FA8787 = {
+						CreatedOnToolsVersion = 8.3.3;
+						DevelopmentTeam = BYS7D5JGQJ;
+						ProvisioningStyle = Automatic;
+					};
 					2A9BA95F1EE8029A00BE2F00 = {
 						CreatedOnToolsVersion = 8.3.2;
 						DevelopmentTeam = BYS7D5JGQJ;
@@ -207,11 +257,19 @@
 			targets = (
 				2A9BA95F1EE8029A00BE2F00 /* DPTypeChecker */,
 				2A9BA9721EE802D500BE2F00 /* CGrammar */,
+				2A142E6A1EEFE64C00FA8787 /* DPTypeCheckerTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		2A142E691EEFE64C00FA8787 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2A9BA9711EE802D500BE2F00 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -222,6 +280,18 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2A142E671EEFE64C00FA8787 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A142E6E1EEFE64C00FA8787 /* DPTypeCheckerTests.swift in Sources */,
+				2A142E761EEFE66400FA8787 /* AbSyn+Extensions.swift in Sources */,
+				2A142E771EEFE66400FA8787 /* Parser.swift in Sources */,
+				2A142E751EEFE66400FA8787 /* AbstractSyntax.swift in Sources */,
+				2A142E741EEFE66000FA8787 /* TypeChecker.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		2A9BA95C1EE8029A00BE2F00 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -248,6 +318,34 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		2A142E701EEFE64C00FA8787 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = BYS7D5JGQJ;
+				INFOPLIST_FILE = DPTypeCheckerTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = de.wittlerDev.DPTypeCheckerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 3.0;
+			};
+			name = Debug;
+		};
+		2A142E711EEFE64C00FA8787 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = BYS7D5JGQJ;
+				INFOPLIST_FILE = DPTypeCheckerTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = de.wittlerDev.DPTypeCheckerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 3.0;
+			};
+			name = Release;
+		};
 		2A9BA9651EE8029A00BE2F00 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -417,6 +515,14 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		2A142E721EEFE64C00FA8787 /* Build configuration list for PBXNativeTarget "DPTypeCheckerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A142E701EEFE64C00FA8787 /* Debug */,
+				2A142E711EEFE64C00FA8787 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		2A9BA95B1EE8029A00BE2F00 /* Build configuration list for PBXProject "DPTypeChecker" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -9,9 +9,19 @@
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>DPTypeCheckerTests.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
+		<key>2A142E6A1EEFE64C00FA8787</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 		<key>2A9BA95F1EE8029A00BE2F00</key>
 		<dict>
 			<key>primary</key>
