@@ -13,6 +13,7 @@
 		2A142E751EEFE66400FA8787 /* AbstractSyntax.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */; };
 		2A142E761EEFE66400FA8787 /* AbSyn+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */; };
 		2A142E771EEFE66400FA8787 /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA139581EEAAC2800389C66 /* Parser.swift */; };
+		2A142E7A1EEFEBF400FA8787 /* Example4.dpp in Resources */ = {isa = PBXBuildFile; fileRef = 2A142E791EEFEBF400FA8787 /* Example4.dpp */; };
 		2A74E7F41EE9D71800C4D566 /* AbSyn+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */; };
 		2A9BA9641EE8029A00BE2F00 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA9631EE8029A00BE2F00 /* main.swift */; };
 		2A9BA96C1EE802AA00BE2F00 /* AbstractSyntax.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */; };
@@ -45,6 +46,7 @@
 		2A142E6B1EEFE64C00FA8787 /* DPTypeCheckerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DPTypeCheckerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A142E6D1EEFE64C00FA8787 /* DPTypeCheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DPTypeCheckerTests.swift; sourceTree = "<group>"; };
 		2A142E6F1EEFE64C00FA8787 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2A142E791EEFEBF400FA8787 /* Example4.dpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Example4.dpp; sourceTree = "<group>"; };
 		2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "AbSyn+Extensions.swift"; sourceTree = "<group>"; };
 		2A9BA9601EE8029A00BE2F00 /* DPTypeChecker */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = DPTypeChecker; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A9BA9631EE8029A00BE2F00 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -94,9 +96,18 @@
 			isa = PBXGroup;
 			children = (
 				2A142E6D1EEFE64C00FA8787 /* DPTypeCheckerTests.swift */,
+				2A142E781EEFEBD800FA8787 /* TestFiles */,
 				2A142E6F1EEFE64C00FA8787 /* Info.plist */,
 			);
 			path = DPTypeCheckerTests;
+			sourceTree = "<group>";
+		};
+		2A142E781EEFEBD800FA8787 /* TestFiles */ = {
+			isa = PBXGroup;
+			children = (
+				2A142E791EEFEBF400FA8787 /* Example4.dpp */,
+			);
+			path = TestFiles;
 			sourceTree = "<group>";
 		};
 		2A9BA9571EE8029A00BE2F00 = {
@@ -267,6 +278,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2A142E7A1EEFEBF400FA8787 /* Example4.dpp in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

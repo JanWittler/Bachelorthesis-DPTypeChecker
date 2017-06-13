@@ -37,6 +37,22 @@ class DPTypeCheckerTests: XCTestCase {
                                      Stm.sAssert(explicitTypeAssert),
                                      Stm.sAssert(implicitTypeAssert)])
         
-        XCTAssertNoThrow(try typeCheck(program), "type check failed")
+        XCTAssertNoThrow(try typeCheck(program), "type check for basic typing failed")
+    }
+    
+    func testExample4() {
+        guard let path = path(forResource: "Example4", ofType: "dpp") else {
+            XCTFail("file for example 4 not found")
+            return
+        }
+        guard let example4 = parseFile(at: path) else {
+            XCTFail("failed to parse example 4")
+            return
+        }
+        XCTAssertNoThrow(try typeCheck(example4), "type check of example 4 failed")
+    }
+    
+    func path(forResource resource: String?, ofType type: String?) -> String? {
+        return Bundle(for: type(of: self)).path(forResource: resource, ofType: type)
     }
 }
