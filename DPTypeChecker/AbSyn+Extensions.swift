@@ -17,6 +17,8 @@ extension Type {
             return rCount
         case let .tTypeConvenienceInt(_ ,rCount):
             return Double(rCount)
+        case .tTypeInf(_):
+            return Double.infinity
         }
     }
     
@@ -25,6 +27,8 @@ extension Type {
         case let .tType(iType, _):
             return iType
         case let .tTypeConvenienceInt(iType, _):
+            return iType
+        case let .tTypeInf(iType):
             return iType
         }
     }

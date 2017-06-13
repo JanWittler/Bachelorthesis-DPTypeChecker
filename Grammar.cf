@@ -1,9 +1,9 @@
 PDefs.   Program ::= [Stm] ;
 terminator Stm "" ;
 
-SInit. Stm ::= "let" Id "=" Exp ;
+SInit. 			   Stm ::= "let" Id "=" Exp ;
 SInitExplicitType. Stm ::= "let" Id ":" Type "=" Exp ;
-SAssert. Stm ::= Assertion ;
+SAssert. 		   Stm ::= Assertion ;
 
 EInt.    Exp15  ::= Integer ;
 EId.     Exp15  ::= Id ;
@@ -15,10 +15,11 @@ coercions Exp 15 ;
 
 ATypeEqual. Assertion ::= "assertTypeEqual" "(" Id "," Type ")" ;
 
-TType. Type ::= InternalType "!" Double ;
+TType. 				 Type ::= InternalType "!" Double ;
+TTypeInf. 		 	 Type ::= InternalType "!" "inf" ;
 TTypeConvenienceInt. Type ::= InternalType "!" Integer ;
 
-ITBase. InternalType ::= BaseType ;
+ITBase.    InternalType ::= BaseType ;
 ITMulPair. InternalType ::= "(" Type "," Type ")" ;
 
 rules BaseType ::= "Int" ;
