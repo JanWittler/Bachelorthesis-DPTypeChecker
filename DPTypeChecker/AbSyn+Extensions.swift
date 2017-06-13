@@ -34,6 +34,25 @@ extension Type {
     }
 }
 
+//MARK: subtyping
+
+extension Type {
+    func isSubtype(of other: Type) -> Bool {
+        //if the own count is larger than the compared count, we can alwas return `false`, no matter of the internal types
+        guard replicationCount <= other.replicationCount else {
+            return false
+        }
+        switch (self.internalType, other.internalType) {
+        case (let .iTBase(bType1), let .iTBase(bType2)):
+            return bType1 == bType2
+        case (let .iTMulPair(pair1), let .iTMulPair(pair2)):
+            return pair1.0.isSubtype(of:pair2.0) && pair1.1.isSubtype(of:pair2.1)
+        default:
+            return false
+        }
+    }
+}
+
 //MARK: equatable extensions
 
 extension Type: Equatable {

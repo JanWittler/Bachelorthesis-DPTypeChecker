@@ -12,6 +12,7 @@ enum TypeCheckerError: Error {
     case variableAlreadyExists(Id)
     case variableNotFound(Id)
     case invalidVariableAccess(Id)
+    case assignmentFailed(stm: Stm, actual: Type, expected: Type)
     case assertionFailed(String)
     case other(String)
 }
@@ -118,15 +119,10 @@ private func checkStm(_ stm: Stm) throws {
     case let .sInit(id, exp):
         try environment.currentContext.add(id, type: inferType(exp))
     case let .sInitExplicitType(id, type, exp):
-        //TODO: uncomment this when subtyping is implemented
-        let _ = exp //TODO: remove when subtyping is implemented, used to remove warning
-//        let expType = try inferType(exp)
-//        guard type == expType || type.isSubtype(expType) else {
-//            throw TypeCheckerError.other("type of assignment does not match expression" + "\n" +
-//                "exp: " + exp.show() + "\n" +
-//                "expected type: " + type + "\n" +
-//                "actual type: " + expType)
-//        }
+        let expType = try inferType(exp)
+        guard type.isSubtype(of: expType) else {
+            throw TypeCheckerError.assignmentFailed(stm: stm, actual: expType, expected: type)
+        }
         try environment.currentContext.add(id, type: type)
         
     case let .sAssert(assertion):
@@ -177,6 +173,11 @@ extension TypeCheckerError: CustomStringConvertible {
             return "variable `\(id.value)` not found in context"
         case let .invalidVariableAccess(id):
             return "access to variable `\(id.value)` led to replication count less than zero"
+        case let .assignmentFailed(stm, actual, expected):
+            return "assignment failed in statement" + "\n" +
+            "expression: " + stm.show() + "\n" +
+            "expected: \(expected)\n" +
+            "actual: \(actual)"
         case let .assertionFailed(message):
             return message
         case let .other(message):
