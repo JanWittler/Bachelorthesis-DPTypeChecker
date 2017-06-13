@@ -24,14 +24,14 @@ class DPTypeCheckerTests: XCTestCase {
         /*
          let x: Int!1 = 10
          let y = 20
-         assertType(x, Int!1)
-         assertType(y, Int!inf)
+         assertTypeEqual(x, Int!1)
+         assertTypeEqual(y, Int!inf)
         */
         let explicitType = Type.tType(.iTBase(.int), 1)
         let explicitTypeAssignStatement = Stm.sInitExplicitType(Id("x"), explicitType, .eInt(10))
         let implicitTypeAssignStatement = Stm.sInit(Id("y"), .eInt(20))
         let explicitTypeAssert = Assertion.aTypeEqual(Id("x"), explicitType)
-        let implicitTypeAssert = Assertion.aTypeEqual(Id("y"), .tType(.iTBase(.int), Double.infinity))
+        let implicitTypeAssert = Assertion.aTypeEqual(Id("y"), .tTypeInf(.iTBase(.int)))
         let program = Program.pDefs([explicitTypeAssignStatement,
                                      implicitTypeAssignStatement,
                                      Stm.sAssert(explicitTypeAssert),
@@ -40,19 +40,26 @@ class DPTypeCheckerTests: XCTestCase {
         XCTAssertNoThrow(try typeCheck(program), "type check for basic typing failed")
     }
     
-    func testExample4() {
-        guard let path = path(forResource: "Example4", ofType: "dpp") else {
-            XCTFail("file for example 4 not found")
-            return
+    func testPair() {
+        let files = ["Pair_0.dpp", "Pair_1.dpp"]
+        for file in files {
+            testFile(file)
         }
-        guard let example4 = parseFile(at: path) else {
-            XCTFail("failed to parse example 4")
-            return
-        }
-        XCTAssertNoThrow(try typeCheck(example4), "type check of example 4 failed")
     }
     
-    func path(forResource resource: String?, ofType type: String?) -> String? {
+    private func testFile(_ file: String) {
+        guard let path = path(forResource: file, ofType: nil) else {
+            XCTFail("file for \(file) not found")
+            return
+        }
+        guard let tree = parseFile(at: path) else {
+            XCTFail("failed to parse \(file)")
+            return
+        }
+        XCTAssertNoThrow(try typeCheck(tree), "type check of \(file) failed")
+    }
+    
+    private func path(forResource resource: String?, ofType type: String?) -> String? {
         return Bundle(for: type(of: self)).path(forResource: resource, ofType: type)
     }
 }
