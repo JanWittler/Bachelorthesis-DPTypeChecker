@@ -3,6 +3,7 @@ terminator Stm "" ;
 
 SInit. 			   Stm ::= "let" Id "=" Exp ;
 SInitExplicitType. Stm ::= "let" Id ":" Type "=" Exp ;
+SSplit.			   Stm ::= "let" "(" Id "," Id ")" "=" Exp ;
 SAssert. 		   Stm ::= Assertion ;
 
 EInt.    Exp ::= Integer ;

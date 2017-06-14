@@ -13,6 +13,7 @@ enum TypeCheckerError: Error {
     case variableNotFound(Id)
     case invalidVariableAccess(Id)
     case assignmentFailed(stm: Stm, actual: Type, expected: Type)
+    case splitFailed(stm: Stm, actual: Type)
     case assertionFailed(String)
     case other(String)
 }
@@ -163,9 +164,17 @@ private func checkStm(_ stm: Stm) throws {
             throw TypeCheckerError.assignmentFailed(stm: stm, actual: expType, expected: type)
         }
         let differingFactor = type.replicationCount / expType.replicationCount
+        //TODO: there is no real need to scale everything
+        // but rather only those parts than are affected by the assignment
         try environment.scale(by: differingFactor)
         try environment.currentContext.add(id, type: type)
-        
+    case let .sSplit(id1, id2, exp):
+        let expType = try inferType(exp)
+        guard case let .cTMulPair(type1, type2) = expType.coreType else {
+            throw TypeCheckerError.splitFailed(stm: stm, actual: expType)
+        }
+        try environment.currentContext.add(id1, type: type1)
+        try environment.currentContext.add(id2, type: type2)
     case let .sAssert(assertion):
         try checkAssertion(assertion)
     }
@@ -222,6 +231,11 @@ extension TypeCheckerError: CustomStringConvertible {
             return "assignment failed in statement" + "\n" +
             "expression: " + stm.show() + "\n" +
             "expected: \(expected)\n" +
+            "actual: \(actual)"
+        case let .splitFailed(stm, actual):
+            return "assignment failed in statement" + "\n" +
+            "expression: " + stm.show() + "\n" +
+            "expected: pair type\n" +
             "actual: \(actual)"
         case let .assertionFailed(message):
             return message
