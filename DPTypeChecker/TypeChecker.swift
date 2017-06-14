@@ -157,25 +157,42 @@ func typeCheck(_ program: Program) throws {
 
 private func checkStm(_ stm: Stm) throws {
     switch stm {
-    case let .sInit(id, exp):
-        try environment.currentContext.add(id, type: inferType(exp))
-    case let .sInitExplicitType(id, type, exp):
+    case let .sInit(idMaybeTyped, exp):
         let expType = try inferType(exp)
-        guard expType.isSubtype(of: type) else {
-            throw TypeCheckerError.assignmentFailed(stm: stm, actual: expType, expected: type)
+        let varType = idMaybeTyped.type ?? expType
+        if let type = idMaybeTyped.type {
+            guard expType.isSubtype(of: type) else {
+                throw TypeCheckerError.assignmentFailed(stm: stm, actual: expType, expected: type)
+            }
+            let differingFactor = type.replicationCount / expType.replicationCount
+            //TODO: there is no real need to scale everything
+            // but rather only those parts that are affected by the assignment
+            try environment.scale(by: differingFactor)
         }
-        let differingFactor = type.replicationCount / expType.replicationCount
-        //TODO: there is no real need to scale everything
-        // but rather only those parts than are affected by the assignment
-        try environment.scale(by: differingFactor)
-        try environment.currentContext.add(id, type: type)
-    case let .sSplit(id1, id2, exp):
+        try environment.currentContext.add(idMaybeTyped.id, type: varType)
+    case let .sSplit(idMaybeTyped1, idMaybeTyped2, exp):
         let expType = try inferType(exp)
         guard case let .cTMulPair(type1, type2) = expType.coreType else {
             throw TypeCheckerError.splitFailed(stm: stm, actual: expType)
         }
-        try environment.currentContext.add(id1, type: type1)
-        try environment.currentContext.add(id2, type: type2)
+        let id1 = idMaybeTyped1.id
+        let id2 = idMaybeTyped2.id
+        var factor1: Double = 1
+        var factor2: Double = 1
+        if let type = idMaybeTyped1.type {
+            factor1 = type.replicationCount / type1.replicationCount
+        }
+        if let type = idMaybeTyped2.type {
+            factor2 = type.replicationCount / type2.replicationCount
+        }
+        let maxFactor = max(factor1, factor2)
+        try environment.scale(by: maxFactor)
+        //since both variables are scaled by `maxFactor` it would be wrong to use the annotated types, rather we need to compute the scaled type from the inferred type
+        //note: if the `maxFactor` is equal to the factor of the component, the scaled type will match the annotated type
+        //TODO: there is no real need to scale everything
+        // but rather only those parts that are affected by the assignment
+        try environment.currentContext.add(id1, type: .tType(type1.coreType, type1.replicationCount * maxFactor))
+        try environment.currentContext.add(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
     case let .sAssert(assertion):
         try checkAssertion(assertion)
     }

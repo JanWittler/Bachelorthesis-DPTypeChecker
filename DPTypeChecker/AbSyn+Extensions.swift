@@ -34,6 +34,26 @@ extension Type {
     }
 }
 
+extension IdMaybeTyped {
+    var id: Id {
+        switch self {
+        case let .idNotTyped(id):
+            return id
+        case let.idTyped(id, _):
+            return id
+        }
+    }
+    
+    var type: Type? {
+        switch self {
+        case .idNotTyped(_):
+            return nil
+        case let .idTyped(_, type):
+            return type
+        }
+    }
+}
+
 //MARK: subtyping
 
 extension Type {

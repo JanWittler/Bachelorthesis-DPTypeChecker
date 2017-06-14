@@ -1,10 +1,12 @@
 PDefs.   Program ::= [Stm] ;
 terminator Stm "" ;
 
-SInit. 			   Stm ::= "let" Id "=" Exp ;
-SInitExplicitType. Stm ::= "let" Id ":" Type "=" Exp ;
-SSplit.			   Stm ::= "let" "(" Id "," Id ")" "=" Exp ;
+SInit. 			   Stm ::= "let" IdMaybeTyped "=" Exp ;
+SSplit.			   Stm ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" Exp ;
 SAssert. 		   Stm ::= Assertion ;
+
+IdNotTyped. IdMaybeTyped ::= Id ;
+IdTyped.    IdMaybeTyped ::= Id ":" Type ;
 
 EInt.    Exp ::= Integer ;
 EUnit.   Exp ::= "()" ;
