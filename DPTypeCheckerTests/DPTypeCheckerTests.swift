@@ -28,8 +28,8 @@ class DPTypeCheckerTests: XCTestCase {
          assertTypeEqual(y, Int!1)
         */
         let explicitType = Type.tType(.cTBase(.int), 1)
-        let explicitTypeAssignStatement = Stm.sInitExplicitType(Id("x"), explicitType, .eInt(10))
-        let implicitTypeAssignStatement = Stm.sInit(Id("y"), .eUnit)
+        let explicitTypeAssignStatement = Stm.sInit(.idTyped(Id("x"), explicitType), .eInt(10))
+        let implicitTypeAssignStatement = Stm.sInit(.idNotTyped(Id("y")), .eUnit)
         let explicitTypeAssert = Assertion.aTypeEqual(Id("x"), explicitType)
         let implicitTypeAssert = Assertion.aTypeEqual(Id("y"), .tType(.cTBase(.unit), 1))
         let program = Program.pDefs([explicitTypeAssignStatement,
@@ -62,7 +62,7 @@ class DPTypeCheckerTests: XCTestCase {
     }
     
     func testSplit() {
-        let files = ["Split_0.dpp"]
+        let files = ["Split_0.dpp", "Split_1.dpp"]
         testFiles(files)
     }
     

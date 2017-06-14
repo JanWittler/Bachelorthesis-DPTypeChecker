@@ -1,3 +1,4 @@
+//pair with same arguments
 let x: Int!4 = 10
 let pair = (x, x)
 

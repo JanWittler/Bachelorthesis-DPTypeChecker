@@ -1,0 +1,9 @@
+//split with explicit type annotations
+let x: Int!30 = 10
+let pair: (Int!1, Unit!1)!6 = (x, ())
+let (a: Int!5, b: Unit!2) = pair
+
+assertTypeEqual(x, Int!0)
+assertTypeEqual(pair, (Int!1, Unit!1)!1)
+assertTypeEqual(a, Int!5)
+assertTypeEqual(b, Unit!5)

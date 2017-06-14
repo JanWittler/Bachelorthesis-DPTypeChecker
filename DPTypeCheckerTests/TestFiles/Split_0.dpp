@@ -1,3 +1,4 @@
+//split without type annotations
 let x: Int!2 = 10
 let pair = (x, ())
 let (a, b) = pair
