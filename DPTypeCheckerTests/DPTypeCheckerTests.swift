@@ -25,13 +25,13 @@ class DPTypeCheckerTests: XCTestCase {
          let x: Int!1 = 10
          let y = 20
          assertTypeEqual(x, Int!1)
-         assertTypeEqual(y, Int!inf)
+         assertTypeEqual(y, Int!1)
         */
         let explicitType = Type.tType(.cTBase(.int), 1)
         let explicitTypeAssignStatement = Stm.sInitExplicitType(Id("x"), explicitType, .eInt(10))
         let implicitTypeAssignStatement = Stm.sInit(Id("y"), .eInt(20))
         let explicitTypeAssert = Assertion.aTypeEqual(Id("x"), explicitType)
-        let implicitTypeAssert = Assertion.aTypeEqual(Id("y"), .tTypeExponential(.cTBase(.int)))
+        let implicitTypeAssert = Assertion.aTypeEqual(Id("y"), .tType(.cTBase(.int), 1))
         let program = Program.pDefs([explicitTypeAssignStatement,
                                      implicitTypeAssignStatement,
                                      Stm.sAssert(explicitTypeAssert),

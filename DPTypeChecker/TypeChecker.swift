@@ -51,29 +51,52 @@ private struct Environment {
         throw TypeCheckerError.variableNotFound(id)
     }
     
-    mutating func updateReplicationCount(for id: Id, delta: Double) throws {
+    func lookupUsageCount(_ id: Id) throws -> Double {
+        //check topmost context first
+        for context in contexts.reversed() {
+            do {
+                return try context.lookupUsageCount(id)
+            }
+            catch TypeCheckerError.variableNotFound(_) {
+                //error intended to occur, continue searching in next context
+            }
+        }
+        throw TypeCheckerError.variableNotFound(id)
+    }
+    
+    mutating func updateUsageCount(for id: Id, delta: Double) throws {
         var index = contexts.count - 1
         while index >= 0 {
             do {
                 var context = contexts[index]
-                try context.updateReplicationCount(for: id, delta: delta)
+                try context.updateUsageCount(for: id, delta: delta)
                 contexts[index] = context
                 return
             }
             catch TypeCheckerError.variableNotFound(_) {
-                //error intended to occur, continue searching in next context
+                    //error intended to occur, continue searching in next context
             }
             index -= 1
         }
         throw TypeCheckerError.variableNotFound(id)
     }
+    
+    mutating func scale(by factor: Double) throws {
+        precondition(factor >= 1, "scaling to lower count invalid")
+        
+        for i in 0..<contexts.count {
+            var context = contexts[i]
+            try context.scale(by: factor)
+            contexts[i] = context
+        }
+    }
 }
 
 private struct Context {
-    private var values : [Id : Type] = [:]
+    private var values : [Id : (Type, Double)] = [:]
     
     subscript(_ id: Id) -> Type? {
-        return values[id]
+        return values[id]?.0
     }
     
     mutating func add(_ id: Id, type: Type) throws {
@@ -83,24 +106,40 @@ private struct Context {
         guard type.replicationCount >= 0 else {
             throw TypeCheckerError.other("variable `\(id.value)` must be initialized with a nonnegative replication count")
         }
-        values[id] = type
+        values[id] = (type, 0)
     }
     
-    mutating func updateReplicationCount(for id: Id, delta: Double) throws {
-        let type = try lookup(id)
-        let newRCount = type.replicationCount - delta
-        guard newRCount >= 0 else {
+    mutating func updateUsageCount(for id: Id, delta: Double) throws {
+        precondition(delta >= 0, "the usage count can't be reduced")
+        
+        guard let (type, count) = values[id] else {
+            throw TypeCheckerError.variableNotFound(id)
+        }
+        let newCount = count + delta
+        guard type.replicationCount >= newCount else {
             throw TypeCheckerError.invalidVariableAccess(id)
         }
-        let newType = Type.tType(type.coreType, newRCount)
-        values[id] = newType
+        values[id] = (type, newCount)
     }
     
     func lookup(_ id: Id) throws -> Type {
         if let type = values[id] {
-            return type
+            return type.0
         }
         throw TypeCheckerError.variableNotFound(id)
+    }
+    
+    func lookupUsageCount(_ id: Id) throws -> Double {
+        if let type = values[id] {
+            return type.1
+        }
+        throw TypeCheckerError.variableNotFound(id)
+    }
+    
+    mutating func scale(by factor: Double) throws {
+        for (id, (_, count)) in values {
+            try updateUsageCount(for: id, delta: count * factor)
+        }
     }
 }
 
@@ -120,9 +159,11 @@ private func checkStm(_ stm: Stm) throws {
         try environment.currentContext.add(id, type: inferType(exp))
     case let .sInitExplicitType(id, type, exp):
         let expType = try inferType(exp)
-        guard type.isSubtype(of: expType) else {
+        guard expType.isSubtype(of: type) else {
             throw TypeCheckerError.assignmentFailed(stm: stm, actual: expType, expected: type)
         }
+        let differingFactor = type.replicationCount / expType.replicationCount
+        try environment.scale(by: differingFactor)
         try environment.currentContext.add(id, type: type)
         
     case let .sAssert(assertion):
@@ -133,11 +174,11 @@ private func checkStm(_ stm: Stm) throws {
 private func inferType(_ exp: Exp) throws -> Type {
     switch exp {
     case .eInt(_):
-        return .tType(.cTBase(.int), .infinity)
+        return .tType(.cTBase(.int), 1)
     case let .eId(id):
         let type = try environment.lookup(id)
         let returnType = Type.tType(type.coreType, 1)
-        try environment.updateReplicationCount(for: id, delta: returnType.replicationCount)
+        try environment.updateUsageCount(for: id, delta: 1)
         return returnType
     case let .ePair(e1, e2):
         let type1 = try inferType(e1)
@@ -153,7 +194,8 @@ private func checkAssertion(_ assertion: Assertion) throws {
     switch assertion {
     case let .aTypeEqual(id, type):
         let idType = try environment.lookup(id)
-        guard idType == type else {
+        let usageCount = try environment.lookupUsageCount(id)
+        guard idType.coreType == type.coreType && idType.replicationCount - usageCount == type.replicationCount else {
             let errorMessage = "variable `\(id.value)` does not match type\n" +
                 "expected: \(type)\n" +
                 "actual: \(idType)"
