@@ -197,10 +197,11 @@ private func checkAssertion(_ assertion: Assertion) throws {
     case let .aTypeEqual(id, type):
         let idType = try environment.lookup(id)
         let usageCount = try environment.lookupUsageCount(id)
-        guard idType.coreType == type.coreType && idType.replicationCount - usageCount == type.replicationCount else {
+        let updatedType = Type.tType(idType.coreType, idType.replicationCount - usageCount)
+        guard updatedType == type else {
             let errorMessage = "variable `\(id.value)` does not match type\n" +
                 "expected: \(type)\n" +
-                "actual: \(idType)"
+                "actual: \(updatedType)"
             throw TypeCheckerError.assertionFailed(errorMessage)
         }
     }
