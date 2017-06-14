@@ -5,13 +5,12 @@ SInit. 			   Stm ::= "let" Id "=" Exp ;
 SInitExplicitType. Stm ::= "let" Id ":" Type "=" Exp ;
 SAssert. 		   Stm ::= Assertion ;
 
-EInt.    Exp15  ::= Integer ;
-EId.     Exp15  ::= Id ;
-EPair.   Exp15  ::= "(" Exp "," Exp ")" ;
+EInt.    Exp ::= Integer ;
+EUnit.   Exp ::= "()" ;
+EId.     Exp ::= Id ;
+EPair.   Exp ::= "(" Exp "," Exp ")" ;
 
-internal ETyped. Exp15 ::= "(" Exp ":" Type ")" ;
-
-coercions Exp 15 ;
+internal ETyped. Exp ::= "(" Exp ":" Type ")" ;
 
 ATypeEqual. Assertion ::= "assertTypeEqual" "(" Id "," Type ")" ;
 
@@ -22,7 +21,7 @@ TTypeConvenienceInt. Type ::= CoreType "!" Integer ;
 CTBase.    CoreType ::= BaseType ;
 CTMulPair. CoreType ::= "(" Type "," Type ")" ;
 
-rules BaseType ::= "Int" ;
+rules BaseType ::= "Int" | "Unit" ;
 
 token Id (letter (letter | digit | '_')*) ;
 

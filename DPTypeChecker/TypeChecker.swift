@@ -175,6 +175,8 @@ private func inferType(_ exp: Exp) throws -> Type {
     switch exp {
     case .eInt(_):
         return .tType(.cTBase(.int), 1)
+    case .eUnit:
+        return .tType(.cTBase(.unit), 1)
     case let .eId(id):
         let type = try environment.lookup(id)
         let returnType = Type.tType(type.coreType, 1)

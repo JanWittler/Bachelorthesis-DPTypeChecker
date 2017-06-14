@@ -103,6 +103,8 @@ extension BaseType: CustomStringConvertible {
         switch self {
         case .int:
             return "Int"
+        case .unit:
+            return "Unit"
         }
     }
 }
