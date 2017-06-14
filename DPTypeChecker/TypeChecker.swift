@@ -139,7 +139,8 @@ private struct Context {
     
     mutating func scale(by factor: Double) throws {
         for (id, (_, count)) in values {
-            try updateUsageCount(for: id, delta: count * factor)
+            //since we apply a delta we need to substract the current count to get the correct value
+            try updateUsageCount(for: id, delta: count * (factor - 1))
         }
     }
 }
