@@ -42,9 +42,11 @@ class DPTypeCheckerTests: XCTestCase {
     
     func testPair() {
         let files = ["Pair_0.dpp", "Pair_1.dpp"]
-        for file in files {
-            testFile(file)
-        }
+        testFiles(files)
+    }
+    
+    private func testFiles(_ files: [String]) {
+        files.forEach { testFile($0) }
     }
     
     private func testFile(_ file: String) {
@@ -57,6 +59,11 @@ class DPTypeCheckerTests: XCTestCase {
             return
         }
         XCTAssertNoThrow(try typeCheck(tree), "type check of \(file) failed")
+    }
+    
+    func testSplit() {
+        let files = ["Split_0.dpp"]
+        testFiles(files)
     }
     
     private func path(forResource resource: String?, ofType type: String?) -> String? {

@@ -1,0 +1,8 @@
+let x: Int!2 = 10
+let pair = (x, ())
+let (a, b) = pair
+
+assertTypeEqual(x, Int!1)
+assertTypeEqual(pair, (Int!1, Int!1)!0)
+assertTypeEqual(a, Int!1)
+assertTypeEqual(b, Unit!1)
