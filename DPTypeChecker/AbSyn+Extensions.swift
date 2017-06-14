@@ -93,7 +93,7 @@ extension CoreType: CustomStringConvertible {
         case let .cTBase(bType):
             return bType.description
         case let .cTMulPair(t1, t2):
-            return "(\(t1.internalDescription), \(t2.internalDescription))"
+            return "(\(t1.internalDescription) ⊗ \(t2.internalDescription))"
         }
     }
 }
