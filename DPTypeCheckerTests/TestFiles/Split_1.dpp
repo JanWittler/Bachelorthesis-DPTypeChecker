@@ -1,5 +1,5 @@
 //split with explicit type annotations
-func testSplit_1(x: Int!30) -> Unit!5 {
+func testSplit_1(x: Int!30) -> Unit!1 {
     let pair: (Int!1, Unit!1)!6 = (x, ())
     let (a: Int!5, b: Unit!2) = pair
 

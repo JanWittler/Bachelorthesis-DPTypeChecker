@@ -235,6 +235,10 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         guard expType.isSubtype(of: expectedReturnType) else {
             throw TypeCheckerError.invalidReturnType(actual: expType, expected: expectedReturnType)
         }
+        let differingFactor = expectedReturnType.replicationCount / expType.replicationCount
+        //TODO: there is no real need to scale everything
+        // but rather only those parts that are affected by the assignment
+        try environment.scale(by: differingFactor)
     case let .sAssert(assertion):
         try checkAssertion(assertion)
     }
