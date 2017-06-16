@@ -15,12 +15,17 @@ SAssert.   Stm ::= Assertion ;
 IdNotTyped. IdMaybeTyped ::= Id ;
 IdTyped.    IdMaybeTyped ::= Id ":" Type ;
 
-EInt.    Exp ::= Integer ;
-EUnit.   Exp ::= "(" ")" ;
-EId.     Exp ::= Id ;
-EPair.   Exp ::= "(" Exp "," Exp ")" ;
+EInt.    Exp15 ::= Integer ;
+EUnit.   Exp15 ::= "(" ")" ;
+EId.     Exp15 ::= Id ;
+EPair.   Exp15 ::= "(" Exp "," Exp ")" ;
+
+EApp.    Exp15 ::= Id "(" [Exp] ")" ;
+separator Exp "," ;
 
 internal ETyped. Exp ::= "(" Exp ":" Type ")" ;
+
+coercions Exp 15 ;
 
 ATypeEqual. Assertion ::= "assertTypeEqual" "(" Id "," Type ")" ;
 

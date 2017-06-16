@@ -18,6 +18,7 @@ public enum TypeCheckerError: Error {
     case missingReturn(function: Id)
     case invalidReturnType(actual: Type, expected: Type)
     case splitFailed(stm: Stm, actual: Type)
+    case functionApplicationFailed(exp: Exp, argsActual: [Type], argsExpected: [Type])
     case assertionFailed(String)
     case other(String)
 }
@@ -327,7 +328,7 @@ extension TypeCheckerError: CustomStringConvertible {
             return "access to variable `\(id.value)` led to replication count less than zero"
         case let .assignmentFailed(stm, actual, expected):
             return "assignment failed in statement" + "\n" +
-            "expression: " + stm.show() + "\n" +
+            "statement: " + stm.show() + "\n" +
             "expected: \(expected)\n" +
             "actual: \(actual)"
         case let .missingReturn(function: id):
@@ -338,9 +339,14 @@ extension TypeCheckerError: CustomStringConvertible {
             "actual: \(actual)\n"
         case let .splitFailed(stm, actual):
             return "assignment failed in statement" + "\n" +
-            "expression: " + stm.show() + "\n" +
+            "statement: " + stm.show() + "\n" +
             "expected: pair type\n" +
             "actual: \(actual)"
+        case let .functionApplicationFailed(exp: exp, argsActual: actual, argsExpected: expected):
+            return "invalid arguments to function in expression" + "\n" +
+            "expression: " + exp.show() + "\n" +
+                "expected: (\(expected.reduce("", {$0 + ($0.isEmpty ? "" : ", ") + $1.description })))\n" +
+            "actual: (\(actual.reduce("", {$0 + ($0.isEmpty ? "" : ", ") + $1.description })))"
         case let .assertionFailed(message):
             return message
         case let .other(message):
