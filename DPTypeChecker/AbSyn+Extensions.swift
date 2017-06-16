@@ -54,6 +54,22 @@ extension IdMaybeTyped {
     }
 }
 
+extension Arg {
+    var id: Id {
+        switch self {
+        case let .aDecl(id, _):
+            return id
+        }
+    }
+    
+    var type: Type {
+        switch self {
+        case let .aDecl(_, type):
+            return type
+        }
+    }
+}
+
 //MARK: subtyping
 
 extension Type {

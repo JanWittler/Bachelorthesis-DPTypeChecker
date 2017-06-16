@@ -8,7 +8,9 @@
 
 import Foundation
 
-enum TypeCheckerError: Error {
+public enum TypeCheckerError: Error {
+    case functionAlreadyExists(Id)
+    case functionNotFound(Id)
     case variableAlreadyExists(Id)
     case variableNotFound(Id)
     case invalidVariableAccess(Id)
@@ -23,7 +25,8 @@ enum TypeCheckerError: Error {
 private struct Environment {
     //there is always the global context
     var contexts : [Context] = []
-    var currentContext: Context! {
+    var functions: [Id : ([Type], Type)] = [:]
+    private var currentContext: Context! {
         get {
             return contexts.last
         }
@@ -41,6 +44,20 @@ private struct Environment {
         contexts.removeLast()
     }
     
+    mutating func addFunction(id: Id, arguments: [Type], returnType: Type) throws {
+        guard functions[id] == nil else {
+            throw TypeCheckerError.functionAlreadyExists(id)
+        }
+        functions[id] = (arguments, returnType)
+    }
+    
+    mutating func addToCurrentContext(_ id: Id, type: Type) throws {
+        guard functions[id] == nil else {
+            throw TypeCheckerError.functionAlreadyExists(id)
+        }
+        return try currentContext.add(id, type: type)
+    }
+    
     func lookup(_ id: Id) throws -> Type {
         //check topmost context first
         for context in contexts.reversed() {
@@ -52,6 +69,13 @@ private struct Environment {
             }
         }
         throw TypeCheckerError.variableNotFound(id)
+    }
+    
+    func lookupFunction(_ id: Id) throws -> ([Type], Type) {
+        guard let function = functions[id] else {
+            throw TypeCheckerError.functionNotFound(id)
+        }
+        return function
     }
     
     func lookupUsageCount(_ id: Id) throws -> Double {
@@ -97,10 +121,6 @@ private struct Environment {
 
 private struct Context {
     private var values : [Id : (Type, Double)] = [:]
-    
-    subscript(_ id: Id) -> Type? {
-        return values[id]?.0
-    }
     
     mutating func add(_ id: Id, type: Type) throws {
         guard !values.keys.contains(id) else {
@@ -153,7 +173,17 @@ func typeCheck(_ program: Program) throws {
     environment = Environment()
     switch program {
     case let .pDefs(defs):
+        try addFunctionDefinitionsToEnvironment(defs)
         try defs.forEach { try checkDef($0) }
+    }
+}
+
+private func addFunctionDefinitionsToEnvironment(_ defs: [Def]) throws {
+    try defs.forEach { def in
+        switch def {
+        case let .dFun(id, args, returnType, _):
+            try environment.addFunction(id: id, arguments: args.map({ $0.type }), returnType: returnType)
+        }
     }
 }
 
@@ -164,17 +194,17 @@ private func checkDef(_ def: Def) throws {
         guard containsReturnStatement(stms) else {
             throw TypeCheckerError.missingReturn(function: id)
         }
-        try addArgsToEnvironment(args)
+        try addArgsToCurrentContext(args)
         try stms.forEach { try checkStm($0, expectedReturnType: returnType) }
         environment.popContext()
     }
 }
 
-private func addArgsToEnvironment(_ args: [Arg]) throws {
+private func addArgsToCurrentContext(_ args: [Arg]) throws {
     try args.forEach { arg in
         switch arg {
         case let .aDecl(id, type):
-            try environment.currentContext.add(id, type: type)
+            try environment.addToCurrentContext(id, type: type)
         }
     }
 }
@@ -206,7 +236,7 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
             // but rather only those parts that are affected by the assignment
             try environment.scale(by: differingFactor)
         }
-        try environment.currentContext.add(idMaybeTyped.id, type: varType)
+        try environment.addToCurrentContext(idMaybeTyped.id, type: varType)
     case let .sSplit(idMaybeTyped1, idMaybeTyped2, exp):
         let expType = try inferType(exp)
         guard case let .cTMulPair(type1, type2) = expType.coreType else {
@@ -228,8 +258,8 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         //note: if the `maxFactor` is equal to the factor of the component, the scaled type will match the annotated type
         //TODO: there is no real need to scale everything
         // but rather only those parts that are affected by the assignment
-        try environment.currentContext.add(id1, type: .tType(type1.coreType, type1.replicationCount * maxFactor))
-        try environment.currentContext.add(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
+        try environment.addToCurrentContext(id1, type: .tType(type1.coreType, type1.replicationCount * maxFactor))
+        try environment.addToCurrentContext(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
     case let .sReturn(exp):
         let expType = try inferType(exp)
         guard expType.isSubtype(of: expectedReturnType) else {
@@ -283,8 +313,12 @@ private func checkAssertion(_ assertion: Assertion) throws {
 //MARK: TypeCheckerError printing
 
 extension TypeCheckerError: CustomStringConvertible {
-    var description: String {
+    public var description: String {
         switch self {
+        case let .functionAlreadyExists(id):
+            return "function `\(id.value)` already exists"
+        case let .functionNotFound(id):
+            return "variable `\(id.value)` not found"
         case let .variableAlreadyExists(id):
             return "variable `\(id.value)` already exists in context"
         case let .variableNotFound(id):
