@@ -13,6 +13,8 @@ enum TypeCheckerError: Error {
     case variableNotFound(Id)
     case invalidVariableAccess(Id)
     case assignmentFailed(stm: Stm, actual: Type, expected: Type)
+    case missingReturn(function: Id)
+    case invalidReturnType(actual: Type, expected: Type)
     case splitFailed(stm: Stm, actual: Type)
     case assertionFailed(String)
     case other(String)
@@ -159,8 +161,11 @@ private func checkDef(_ def: Def) throws {
     switch def {
     case let .dFun(id, args, returnType, stms):
         environment.pushContext()
+        guard containsReturnStatement(stms) else {
+            throw TypeCheckerError.missingReturn(function: id)
+        }
         try addArgsToEnvironment(args)
-        try stms.forEach { try checkStm($0) }
+        try stms.forEach { try checkStm($0, expectedReturnType: returnType) }
         environment.popContext()
     }
 }
@@ -174,7 +179,20 @@ private func addArgsToEnvironment(_ args: [Arg]) throws {
     }
 }
 
-private func checkStm(_ stm: Stm) throws {
+private func containsReturnStatement(_ stms: [Stm]) -> Bool {
+    return stms.reduce(false, { result, stm -> Bool in
+        let isReturn: Bool
+        switch stm {
+        case .sReturn(_):
+            isReturn = true
+        default:
+            isReturn = false
+        }
+        return result || isReturn
+    })
+}
+
+private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
     switch stm {
     case let .sInit(idMaybeTyped, exp):
         let expType = try inferType(exp)
@@ -213,7 +231,10 @@ private func checkStm(_ stm: Stm) throws {
         try environment.currentContext.add(id1, type: .tType(type1.coreType, type1.replicationCount * maxFactor))
         try environment.currentContext.add(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
     case let .sReturn(exp):
-        break
+        let expType = try inferType(exp)
+        guard expType.isSubtype(of: expectedReturnType) else {
+            throw TypeCheckerError.invalidReturnType(actual: expType, expected: expectedReturnType)
+        }
     case let .sAssert(assertion):
         try checkAssertion(assertion)
     }
@@ -271,6 +292,12 @@ extension TypeCheckerError: CustomStringConvertible {
             "expression: " + stm.show() + "\n" +
             "expected: \(expected)\n" +
             "actual: \(actual)"
+        case let .missingReturn(function: id):
+            return "missing return statement in function `\(id.value)`"
+        case let .invalidReturnType(actual: actual, expected: expected):
+            return "invalid return type in function\n" +
+            "expected: \(expected)\n" +
+            "actual: \(actual)\n"
         case let .splitFailed(stm, actual):
             return "assignment failed in statement" + "\n" +
             "expression: " + stm.show() + "\n" +
