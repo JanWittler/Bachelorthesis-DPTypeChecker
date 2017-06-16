@@ -30,6 +30,23 @@ class DPTypeCheckerTests: XCTestCase {
         testFiles(files)
     }
     
+    func testSplit() {
+        let files = ["Split_0.dpp", "Split_1.dpp"]
+        testFiles(files)
+    }
+    
+    func testFunctionApplication() {
+        let files = ["FuncApply_0.dpp"]
+        testFiles(files)
+    }
+    
+    func testAddNoise() {
+        let files = ["AddNoise_0.dpp"]
+        testFiles(files)
+    }
+    
+//MARK: helper methods
+    
     private func testFiles(_ files: [String]) {
         files.forEach { testFile($0) }
     }
@@ -44,16 +61,6 @@ class DPTypeCheckerTests: XCTestCase {
             return
         }
         XCTAssertNoThrow(try typeCheck(tree), "type check of \(file) failed")
-    }
-    
-    func testSplit() {
-        let files = ["Split_0.dpp", "Split_1.dpp"]
-        testFiles(files)
-    }
-    
-    func testFunctionApplication() {
-        let files = ["FuncApply_0.dpp"]
-        testFiles(files)
     }
     
     private func path(forResource resource: String?, ofType type: String?) -> String? {

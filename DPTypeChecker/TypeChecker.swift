@@ -8,6 +8,8 @@
 
 import Foundation
 
+private let addNoiseId = Id("add_noise")
+
 public enum TypeCheckerError: Error {
     case functionAlreadyExists(Id)
     case functionNotFound(Id)
@@ -20,13 +22,15 @@ public enum TypeCheckerError: Error {
     case splitFailed(stm: Stm, actual: Type)
     case functionApplicationFailed(exp: Exp, argsActual: [Type], argsExpected: [Type])
     case assertionFailed(String)
+    case addNoiseFailed(message: String)
     case other(String)
 }
 
 private struct Environment {
-    //there is always the global context
+    //the `add_noise` function is present in every environment with custom handling thus arguments and return type are only placeholders
+    var functions: [Id : ([Type], Type)] = [addNoiseId : ([], .tTypeExponential(.cTBase(.unit)))]
+    
     var contexts : [Context] = []
-    var functions: [Id : ([Type], Type)] = [:]
     private var currentContext: Context! {
         get {
             return contexts.last
@@ -266,10 +270,13 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         guard expType.isSubtype(of: expectedReturnType) else {
             throw TypeCheckerError.invalidReturnType(actual: expType, expected: expectedReturnType)
         }
-        let differingFactor = expectedReturnType.replicationCount / expType.replicationCount
-        //TODO: there is no real need to scale everything
-        // but rather only those parts that are affected by the assignment
-        try environment.scale(by: differingFactor)
+        //if the expression is exponential and the return type is a subtype of it, it must be exponential too, so no need to scale
+        if expType.replicationCount < Double.infinity {
+            let differingFactor = expectedReturnType.replicationCount / expType.replicationCount
+            //TODO: there is no real need to scale everything
+            // but rather only those parts that are affected by the assignment
+            try environment.scale(by: differingFactor)
+        }
     case let .sAssert(assertion):
         try checkAssertion(assertion)
     }
@@ -291,6 +298,9 @@ private func inferType(_ exp: Exp) throws -> Type {
         let type2 = try inferType(e2)
         return .tType(.cTMulPair(type1, type2), 1)
     case let .eApp(id, exps):
+        guard id != addNoiseId else {
+            return try handleAddNoise(exps)
+        }
         let (args, returnType) = try environment.lookupFunction(id)
         let expTypes = try exps.map { try inferType($0) }
         //TODO: if expTypes[i].isSubtype(type[i]) -> scale by differing factor but this requires scaling to work only on the values that are involved
@@ -302,6 +312,22 @@ private func inferType(_ exp: Exp) throws -> Type {
         //TODO: for now this is accepted to get types where inferencing does not work yet but should be removed as soon as possible
         return type
     }
+}
+
+private func handleAddNoise(_ exps: [Exp]) throws -> Type {
+    guard exps.count == 1 else {
+        throw TypeCheckerError.addNoiseFailed(message: "the add_noise construct requires exactly one argument but was provided \(exps.count)\nnamely \(exps)")
+    }
+    let exp = exps.first!
+    let expType = try inferType(exp)
+    let allowedBaseTypes: [BaseType] = [.int]
+    guard case let .cTBase(baseType) = expType.coreType, allowedBaseTypes.contains(baseType) else {
+        throw TypeCheckerError.addNoiseFailed(message: "invalid type for adding noise to\ntype: \(expType)\nin expression: \(exp)")
+    }
+    guard expType.replicationCount < Double.infinity else {
+        throw TypeCheckerError.addNoiseFailed(message: "adding noise to an exponential type would result in an unusable result and is therefore forbidden")
+    }
+    return .tTypeExponential(expType.coreType)
 }
 
 private func checkAssertion(_ assertion: Assertion) throws {
@@ -356,6 +382,8 @@ extension TypeCheckerError: CustomStringConvertible {
                 "expected: (\(expected.reduce("", {$0 + ($0.isEmpty ? "" : ", ") + $1.description })))\n" +
             "actual: (\(actual.reduce("", {$0 + ($0.isEmpty ? "" : ", ") + $1.description })))"
         case let .assertionFailed(message):
+            return message
+        case let.addNoiseFailed(message: message):
             return message
         case let .other(message):
             return message
