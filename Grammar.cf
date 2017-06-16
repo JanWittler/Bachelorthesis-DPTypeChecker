@@ -1,15 +1,22 @@
-PDefs.   Program ::= [Stm] ;
+PDefs.   Program ::= [Def] ;
+terminator Def "" ;
+
+DFun.      Def ::= "func" Id "(" [Arg] ")" "->" Type "{" [Stm] "}" ;
+separator  Arg "," ;
 terminator Stm "" ;
 
-SInit. 			   Stm ::= "let" IdMaybeTyped "=" Exp ;
-SSplit.			   Stm ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" Exp ;
-SAssert. 		   Stm ::= Assertion ;
+ADecl.     Arg ::= Id ":" Type ;
+
+SInit.     Stm ::= "let" IdMaybeTyped "=" Exp ;
+SSplit.    Stm ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" Exp ;
+SReturn.   Stm ::= "return" Exp ;
+SAssert.   Stm ::= Assertion ;
 
 IdNotTyped. IdMaybeTyped ::= Id ;
 IdTyped.    IdMaybeTyped ::= Id ":" Type ;
 
 EInt.    Exp ::= Integer ;
-EUnit.   Exp ::= "()" ;
+EUnit.   Exp ::= "(" ")" ;
 EId.     Exp ::= Id ;
 EPair.   Exp ::= "(" Exp "," Exp ")" ;
 

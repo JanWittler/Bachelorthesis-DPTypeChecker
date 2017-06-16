@@ -1,6 +1,9 @@
 //pair with same arguments
-let x: Int!4 = 10
-let pair = (x, x)
+func testPair_0(x: Int!4) -> (Int!1, Int!1)!1 {
+    let pair = (x, x)
 
-assertTypeEqual(x, Int!2)
-assertTypeEqual(pair, (Int!1, Int!1)!1)
+    assertTypeEqual(x, Int!2)
+    assertTypeEqual(pair, (Int!1, Int!1)!1)
+
+    return pair
+}

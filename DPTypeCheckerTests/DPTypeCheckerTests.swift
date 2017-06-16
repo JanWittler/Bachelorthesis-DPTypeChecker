@@ -21,23 +21,8 @@ class DPTypeCheckerTests: XCTestCase {
     }
     
     func testBasicTyping() {
-        /*
-         let x: Int!1 = 10
-         let y = ()
-         assertTypeEqual(x, Int!1)
-         assertTypeEqual(y, Int!1)
-        */
-        let explicitType = Type.tType(.cTBase(.int), 1)
-        let explicitTypeAssignStatement = Stm.sInit(.idTyped(Id("x"), explicitType), .eInt(10))
-        let implicitTypeAssignStatement = Stm.sInit(.idNotTyped(Id("y")), .eUnit)
-        let explicitTypeAssert = Assertion.aTypeEqual(Id("x"), explicitType)
-        let implicitTypeAssert = Assertion.aTypeEqual(Id("y"), .tType(.cTBase(.unit), 1))
-        let program = Program.pDefs([explicitTypeAssignStatement,
-                                     implicitTypeAssignStatement,
-                                     Stm.sAssert(explicitTypeAssert),
-                                     Stm.sAssert(implicitTypeAssert)])
-        
-        XCTAssertNoThrow(try typeCheck(program), "type check for basic typing failed")
+        let files = ["Typing.dpp"]
+        testFiles(files)
     }
     
     func testPair() {

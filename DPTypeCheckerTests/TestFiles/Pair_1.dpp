@@ -1,8 +1,10 @@
 //pair with different arguments
-let x: Int!4 = 10
-let y: Unit!1 = ()
-let pair = (x, y)
+func testPair_1(x: Int!4, y: Unit!1) -> (Int!1, Unit!1)!1 {
+    let pair = (x, y)
 
-assertTypeEqual(x, Int!3)
-assertTypeEqual(y, Unit!0)
-assertTypeEqual(pair, (Int!1, Unit!1)!1)
+    assertTypeEqual(x, Int!3)
+    assertTypeEqual(y, Unit!0)
+    assertTypeEqual(pair, (Int!1, Unit!1)!1)
+
+    return pair
+}

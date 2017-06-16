@@ -20,7 +20,7 @@ enum TypeCheckerError: Error {
 
 private struct Environment {
     //there is always the global context
-    var contexts : [Context] = [Context()]
+    var contexts : [Context] = []
     var currentContext: Context! {
         get {
             return contexts.last
@@ -150,8 +150,27 @@ private var environment = Environment()
 func typeCheck(_ program: Program) throws {
     environment = Environment()
     switch program {
-    case let .pDefs(stms):
+    case let .pDefs(defs):
+        try defs.forEach { try checkDef($0) }
+    }
+}
+
+private func checkDef(_ def: Def) throws {
+    switch def {
+    case let .dFun(id, args, returnType, stms):
+        environment.pushContext()
+        try addArgsToEnvironment(args)
         try stms.forEach { try checkStm($0) }
+        environment.popContext()
+    }
+}
+
+private func addArgsToEnvironment(_ args: [Arg]) throws {
+    try args.forEach { arg in
+        switch arg {
+        case let .aDecl(id, type):
+            try environment.currentContext.add(id, type: type)
+        }
     }
 }
 
@@ -193,6 +212,8 @@ private func checkStm(_ stm: Stm) throws {
         // but rather only those parts that are affected by the assignment
         try environment.currentContext.add(id1, type: .tType(type1.coreType, type1.replicationCount * maxFactor))
         try environment.currentContext.add(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
+    case let .sReturn(exp):
+        break
     case let .sAssert(assertion):
         try checkAssertion(assertion)
     }

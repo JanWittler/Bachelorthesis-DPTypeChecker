@@ -1,9 +1,12 @@
 //split without type annotations
-let x: Int!2 = 10
-let pair = (x, ())
-let (a, b) = pair
+func testSplit_0(x: Int!2) -> Int!1 {
+    let pair = (x, ())
+    let (a, b) = pair
 
-assertTypeEqual(x, Int!1)
-assertTypeEqual(pair, (Int!1, Unit!1)!0)
-assertTypeEqual(a, Int!1)
-assertTypeEqual(b, Unit!1)
+    assertTypeEqual(x, Int!1)
+    assertTypeEqual(pair, (Int!1, Unit!1)!0)
+    assertTypeEqual(a, Int!1)
+    assertTypeEqual(b, Unit!1)
+
+    return a
+}
