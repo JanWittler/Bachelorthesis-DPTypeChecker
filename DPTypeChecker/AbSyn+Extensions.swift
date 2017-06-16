@@ -89,6 +89,25 @@ extension Type {
     }
 }
 
+//MARK: OPP type
+
+extension Type {
+    var isOPPType: Bool {
+        return replicationCount == Double.infinity && coreType.isOPPType
+    }
+}
+
+extension CoreType {
+    var isOPPType: Bool {
+        switch self {
+        case .cTBase(_):
+            return true
+        case let .cTMulPair(type1, type2):
+            return type1.isOPPType && type2.isOPPType
+        }
+    }
+}
+
 //MARK: equatable extensions
 
 extension Type: Equatable {
