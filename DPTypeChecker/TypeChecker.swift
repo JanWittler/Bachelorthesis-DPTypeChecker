@@ -13,6 +13,7 @@ private let addNoiseId = Id("add_noise")
 public enum TypeCheckerError: Error {
     case functionAlreadyExists(Id)
     case functionNotFound(Id)
+    case exposedFunctionDoesNotReturnOPPType(function: Id, returnType: Type)
     case variableAlreadyExists(Id)
     case variableNotFound(Id)
     case invalidVariableAccess(Id)
@@ -188,6 +189,8 @@ private func addFunctionDefinitionsToEnvironment(_ defs: [Def]) throws {
         switch def {
         case let .dFun(id, args, returnType, _):
             try environment.addFunction(id: id, arguments: args.map({ $0.type }), returnType: returnType)
+       case let .dFunExposed(id, args, returnType, _):
+            try environment.addFunction(id: id, arguments: args.map({ $0.type }), returnType: returnType)
         }
     }
 }
@@ -195,13 +198,19 @@ private func addFunctionDefinitionsToEnvironment(_ defs: [Def]) throws {
 private func checkDef(_ def: Def) throws {
     switch def {
     case let .dFun(id, args, returnType, stms):
-        environment.pushContext()
         guard containsReturnStatement(stms) else {
             throw TypeCheckerError.missingReturn(function: id)
         }
+        environment.pushContext()
         try addArgsToCurrentContext(args)
         try stms.forEach { try checkStm($0, expectedReturnType: returnType) }
         environment.popContext()
+    case let .dFunExposed(id, args, returnType, stms):
+        //exposed functions must return an opp type since they are handed to the opponent
+        guard returnType.isOPPType else {
+            throw TypeCheckerError.exposedFunctionDoesNotReturnOPPType(function: id, returnType: returnType)
+        }
+        try checkDef(.dFun(id, args, returnType, stms))
     }
 }
 
@@ -354,6 +363,10 @@ extension TypeCheckerError: CustomStringConvertible {
             return "function `\(id.value)` already exists"
         case let .functionNotFound(id):
             return "variable `\(id.value)` not found"
+        case let .exposedFunctionDoesNotReturnOPPType(function: id, returnType: type):
+            return "exposed functions must always return an OPP type\n" +
+            "function: \(id)" +
+            "actual: \(type)"
         case let .variableAlreadyExists(id):
             return "variable `\(id.value)` already exists in context"
         case let .variableNotFound(id):

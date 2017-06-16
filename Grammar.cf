@@ -1,7 +1,8 @@
 PDefs.   Program ::= [Def] ;
 terminator Def "" ;
 
-DFun.      Def ::= "func" Id "(" [Arg] ")" "->" Type "{" [Stm] "}" ;
+DFun.        Def ::= "func" Id "(" [Arg] ")" "->" Type "{" [Stm] "}" ;
+DFunExposed. Def ::= "exposed" "func" Id "(" [Arg] ")" "->" Type "{" [Stm] "}" ;
 separator  Arg "," ;
 terminator Stm "" ;
 
