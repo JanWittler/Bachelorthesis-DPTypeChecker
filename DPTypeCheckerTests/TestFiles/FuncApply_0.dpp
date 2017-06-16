@@ -1,0 +1,25 @@
+//test function application
+func helper_0() -> Int!1 {
+    return 0
+}
+
+func helper_1(x: Int!1) -> Int!1 {
+    let y = x
+    return y
+}
+
+func helper_2(x: Int!1) -> Unit!5 {
+    return ()
+}
+
+func testFuncApply_0() -> Unit!1 {
+    let x = helper_0()
+    let y = helper_1(x)
+    let unit = helper_2(helper_0())
+
+    assertTypeEqual(x, Int!0)
+    assertTypeEqual(y, Int!1)
+    assertTypeEqual(unit, Unit!5)
+
+    return unit
+}

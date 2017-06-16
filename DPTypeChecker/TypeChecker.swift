@@ -290,6 +290,14 @@ private func inferType(_ exp: Exp) throws -> Type {
         let type1 = try inferType(e1)
         let type2 = try inferType(e2)
         return .tType(.cTMulPair(type1, type2), 1)
+    case let .eApp(id, exps):
+        let (args, returnType) = try environment.lookupFunction(id)
+        let expTypes = try exps.map { try inferType($0) }
+        //TODO: if expTypes[i].isSubtype(type[i]) -> scale by differing factor but this requires scaling to work only on the values that are involved
+        guard args == expTypes else {
+            throw TypeCheckerError.functionApplicationFailed(exp: exp, argsActual: expTypes, argsExpected: args)
+        }
+        return returnType
     case let .eTyped(_, type):
         //TODO: for now this is accepted to get types where inferencing does not work yet but should be removed as soon as possible
         return type

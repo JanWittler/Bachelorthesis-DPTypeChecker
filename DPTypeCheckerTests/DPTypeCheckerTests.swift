@@ -51,6 +51,11 @@ class DPTypeCheckerTests: XCTestCase {
         testFiles(files)
     }
     
+    func testFunctionApplication() {
+        let files = ["FuncApply_0.dpp"]
+        testFiles(files)
+    }
+    
     private func path(forResource resource: String?, ofType type: String?) -> String? {
         return Bundle(for: type(of: self)).path(forResource: resource, ofType: type)
     }
