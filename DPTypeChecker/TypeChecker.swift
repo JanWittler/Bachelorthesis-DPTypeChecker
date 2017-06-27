@@ -261,9 +261,15 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         var factor1: Double = 1
         var factor2: Double = 1
         if let type = idMaybeTyped1.type {
+            guard type1.isSubtype(of: type) else {
+                throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: type1)
+            }
             factor1 = type.replicationCount / type1.replicationCount
         }
         if let type = idMaybeTyped2.type {
+            guard type2.isSubtype(of: type) else {
+                throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: type2)
+            }
             factor2 = type.replicationCount / type2.replicationCount
         }
         let maxFactor = max(factor1, factor2)
