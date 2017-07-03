@@ -3,6 +3,8 @@ terminator Def "" ;
 
 DFun.        Def ::= "func" Id "(" [Arg] ")" "->" Type "{" [Stm] "}" ;
 DFunExposed. Def ::= "exposed" "func" Id "(" [Arg] ")" "->" Type "{" [Stm] "}" ;
+DTypedef.	 Def ::= "typedef" Ident "=" "union" Type "|" Type ;
+
 separator  Arg "," ;
 terminator Stm "" ;
 
@@ -10,11 +12,15 @@ ADecl.     Arg ::= Id ":" Type ;
 
 SInit.     Stm ::= "let" IdMaybeTyped "=" Exp ;
 SSplit.    Stm ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" Exp ;
+SCase.     Stm ::= "if" "(" IfCase ")" "{" [Stm] "}" "else" "{" [Stm] "}" ;
 SReturn.   Stm ::= "return" Exp ;
 SAssert.   Stm ::= Assertion ;
 
 IdNotTyped. IdMaybeTyped ::= Id ;
 IdTyped.    IdMaybeTyped ::= Id ":" Type ;
+
+IfCaseLeft.  IfCase ::= "case" IdMaybeTyped "=" "inl" Exp ;
+IfCaseRight. IfCase ::= "case" IdMaybeTyped "=" "inr" Exp ;
 
 EInt.    Exp15 ::= Integer ;
 EUnit.   Exp15 ::= "(" ")" ;
@@ -36,6 +42,7 @@ TTypeConvenienceInt. Type ::= CoreType "!" Integer ;
 
 CTBase.    CoreType ::= BaseType ;
 CTMulPair. CoreType ::= "(" Type "," Type ")" ;
+CTSum.     CoreType ::= "(" Type "+" Type ")" ;
 
 rules BaseType ::= "Int" | "Unit" ;
 

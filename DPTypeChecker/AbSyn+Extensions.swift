@@ -70,6 +70,26 @@ extension Arg {
     }
 }
 
+extension IfCase {
+    var exp: Exp {
+        switch self {
+        case let .ifCaseLeft(_, exp):
+            return exp
+        case let .ifCaseRight(_, exp):
+            return exp
+        }
+    }
+    
+    var idMaybeTyped: IdMaybeTyped {
+        switch self {
+        case let .ifCaseLeft(idMaybeTyped, _):
+            return idMaybeTyped
+        case let .ifCaseRight(idMaybeTyped, _):
+            return idMaybeTyped
+        }
+    }
+}
+
 //MARK: subtyping
 
 extension Type {
@@ -104,6 +124,8 @@ extension CoreType {
             return true
         case let .cTMulPair(type1, type2):
             return type1.isOPPType && type2.isOPPType
+        case let .cTSum(lType, rType):
+            return lType.isOPPType && rType.isOPPType
         }
     }
 }
@@ -149,6 +171,8 @@ extension CoreType: CustomStringConvertible {
             return bType.description
         case let .cTMulPair(t1, t2):
             return "(\(t1.internalDescription) ⊗ \(t2.internalDescription))"
+        case let .cTSum(lType, rType):
+            return "(\(lType.internalDescription) + \(rType.internalDescription))"
         }
     }
 }

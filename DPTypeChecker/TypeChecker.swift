@@ -11,9 +11,10 @@ import Foundation
 private let addNoiseId = Id("add_noise")
 
 public enum TypeCheckerError: Error {
-    case functionAlreadyExists(Id)
+    case nameAlreadyInUse(id: String, as: String)
     case functionNotFound(Id)
     case exposedFunctionDoesNotReturnOPPType(function: Id, returnType: Type)
+    case typeNotFound(Ident)
     case variableAlreadyExists(Id)
     case variableNotFound(Id)
     case invalidVariableAccess(Id)
@@ -21,6 +22,7 @@ public enum TypeCheckerError: Error {
     case missingReturn(function: Id)
     case invalidReturnType(actual: Type, expected: Type)
     case splitFailed(stm: Stm, actual: Type)
+    case conditionFailed(stm: Stm, actual: Type)
     case functionApplicationFailed(exp: Exp, argsActual: [Type], argsExpected: [Type])
     case assertionFailed(String)
     case addNoiseFailed(message: String)
@@ -28,8 +30,37 @@ public enum TypeCheckerError: Error {
 }
 
 private struct Environment {
-    //the `add_noise` function is present in every environment with custom handling thus arguments and return type are only placeholders
-    var functions: [Id : ([Type], Type)] = [addNoiseId : ([], .tTypeExponential(.cTBase(.unit)))]
+    private enum GlobalElement {
+        case addNoise
+        case function(args: [Type], returnType: Type)
+        case typedef(type: Type)
+    }
+    
+    //the `add_noise` function is present in every environment
+    private var globals: [String : GlobalElement] = [
+        addNoiseId.value : .addNoise
+    ]
+    
+    private mutating func addGlobal(_ global: GlobalElement, forId id: String) throws {
+        try checkIdNotGlobalUsed(id)
+        globals[id] = global
+    }
+    
+    private func checkIdNotGlobalUsed(_ id: String) throws {
+        guard let global = globals[id] else {
+            return
+        }
+        let usageType: String
+        switch global {
+        case .addNoise:
+            usageType = "function"
+        case .function:
+            usageType = "function"
+        case .typedef:
+            usageType = "type"
+        }
+        throw TypeCheckerError.nameAlreadyInUse(id: id, as: usageType)
+    }
     
     var contexts : [Context] = []
     private var currentContext: Context! {
@@ -51,16 +82,17 @@ private struct Environment {
     }
     
     mutating func addFunction(id: Id, arguments: [Type], returnType: Type) throws {
-        guard functions[id] == nil else {
-            throw TypeCheckerError.functionAlreadyExists(id)
-        }
-        functions[id] = (arguments, returnType)
+        let function = GlobalElement.function(args: arguments, returnType: returnType)
+        try addGlobal(function, forId: id.value)
+    }
+    
+    mutating func addSumType(name id: Ident, types: (Type, Type)) throws {
+        let sumType = Type.tTypeExponential(.cTSum(types.0, types.1))
+        try addGlobal(.typedef(type: sumType), forId: id.value)
     }
     
     mutating func addToCurrentContext(_ id: Id, type: Type) throws {
-        guard functions[id] == nil else {
-            throw TypeCheckerError.functionAlreadyExists(id)
-        }
+        try checkIdNotGlobalUsed(id.value)
         return try currentContext.add(id, type: type)
     }
     
@@ -78,10 +110,17 @@ private struct Environment {
     }
     
     func lookupFunction(_ id: Id) throws -> ([Type], Type) {
-        guard let function = functions[id] else {
+        guard let global = globals[id.value], case let .function(args, returnType) = global else {
             throw TypeCheckerError.functionNotFound(id)
         }
-        return function
+        return (args, returnType)
+    }
+    
+    func lookupType(_ id: Ident) throws -> Type {
+        guard let global = globals[id.value], case let .typedef(type) = global else {
+            throw TypeCheckerError.typeNotFound(id)
+        }
+        return type
     }
     
     func lookupUsageCount(_ id: Id) throws -> Double {
@@ -179,18 +218,20 @@ func typeCheck(_ program: Program) throws {
     environment = Environment()
     switch program {
     case let .pDefs(defs):
-        try addFunctionDefinitionsToEnvironment(defs)
+        try populateEnvironment(defs)
         try defs.forEach { try checkDef($0) }
     }
 }
 
-private func addFunctionDefinitionsToEnvironment(_ defs: [Def]) throws {
+private func populateEnvironment(_ defs: [Def]) throws {
     try defs.forEach { def in
         switch def {
         case let .dFun(id, args, returnType, _):
             try environment.addFunction(id: id, arguments: args.map({ $0.type }), returnType: returnType)
        case let .dFunExposed(id, args, returnType, _):
             try environment.addFunction(id: id, arguments: args.map({ $0.type }), returnType: returnType)
+        case let .dTypedef(ident, lType, rType):
+            try environment.addSumType(name: ident, types: (lType, rType))
         }
     }
 }
@@ -211,6 +252,8 @@ private func checkDef(_ def: Def) throws {
             throw TypeCheckerError.exposedFunctionDoesNotReturnOPPType(function: id, returnType: returnType)
         }
         try checkDef(.dFun(id, args, returnType, stms))
+    case .dTypedef:
+        break //handled in `populateEnvironment`
     }
 }
 
@@ -227,7 +270,7 @@ private func containsReturnStatement(_ stms: [Stm]) -> Bool {
     return stms.reduce(false, { result, stm -> Bool in
         let isReturn: Bool
         switch stm {
-        case .sReturn(_):
+        case .sReturn:
             isReturn = true
         default:
             isReturn = false
@@ -241,35 +284,30 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
     case let .sInit(idMaybeTyped, exp):
         let expType = try inferType(exp)
         let varType = idMaybeTyped.type ?? expType
+        try checkIfIdMaybeTyped(idMaybeTyped, matchesType: expType, inStm: stm)
         if let type = idMaybeTyped.type {
-            guard expType.isSubtype(of: type) else {
-                throw TypeCheckerError.assignmentFailed(stm: stm, actual: expType, expected: type)
-            }
             let differingFactor = type.replicationCount / expType.replicationCount
             //TODO: there is no real need to scale everything
             // but rather only those parts that are affected by the assignment
             try environment.scale(by: differingFactor)
         }
         try environment.addToCurrentContext(idMaybeTyped.id, type: varType)
+        
     case let .sSplit(idMaybeTyped1, idMaybeTyped2, exp):
         let expType = try inferType(exp)
         guard case let .cTMulPair(type1, type2) = expType.coreType else {
             throw TypeCheckerError.splitFailed(stm: stm, actual: expType)
         }
+        try checkIfIdMaybeTyped(idMaybeTyped1, matchesType: type1, inStm: stm)
+        try checkIfIdMaybeTyped(idMaybeTyped2, matchesType: type2, inStm: stm)
         let id1 = idMaybeTyped1.id
         let id2 = idMaybeTyped2.id
         var factor1: Double = 1
         var factor2: Double = 1
         if let type = idMaybeTyped1.type {
-            guard type1.isSubtype(of: type) else {
-                throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: type1)
-            }
             factor1 = type.replicationCount / type1.replicationCount
         }
         if let type = idMaybeTyped2.type {
-            guard type2.isSubtype(of: type) else {
-                throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: type2)
-            }
             factor2 = type.replicationCount / type2.replicationCount
         }
         let maxFactor = max(factor1, factor2)
@@ -280,6 +318,38 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         // but rather only those parts that are affected by the assignment
         try environment.addToCurrentContext(id1, type: .tType(type1.coreType, type1.replicationCount * maxFactor))
         try environment.addToCurrentContext(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
+        
+    case let .sCase(cond, ifStms, elseStms):
+        environment.pushContext()
+        
+        let condType = try inferType(cond.exp)
+        guard case let .cTSum(lType, rType) = condType.coreType else {
+            throw TypeCheckerError.conditionFailed(stm: stm, actual: condType)
+        }
+        var unwrappedType: Type
+        switch cond {
+        case .ifCaseLeft:
+            unwrappedType = lType
+        case .ifCaseRight:
+            unwrappedType = rType
+        }
+        try checkIfIdMaybeTyped(cond.idMaybeTyped, matchesType: unwrappedType, inStm: stm)
+        if let type = cond.idMaybeTyped.type {
+            let differingFactor = type.replicationCount / unwrappedType.replicationCount
+            //TODO: there is no real need to scale everything
+            // but rather only those parts that are affected by the assignment
+            try environment.scale(by: differingFactor)
+            unwrappedType = type
+        }
+        try environment.addToCurrentContext(cond.idMaybeTyped.id, type: unwrappedType)
+        
+        try ifStms.forEach { try checkStm($0, expectedReturnType: expectedReturnType) }
+        environment.popContext()
+        
+        environment.pushContext()
+        try elseStms.forEach { try checkStm($0, expectedReturnType: expectedReturnType) }
+        environment.popContext()
+        
     case let .sReturn(exp):
         let expType = try inferType(exp)
         guard expType.isSubtype(of: expectedReturnType) else {
@@ -292,14 +362,23 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
             // but rather only those parts that are affected by the assignment
             try environment.scale(by: differingFactor)
         }
+        
     case let .sAssert(assertion):
         try checkAssertion(assertion)
     }
 }
 
+private func checkIfIdMaybeTyped(_ idMaybeTyped: IdMaybeTyped, matchesType type: Type, inStm stm: Stm) throws {
+    if let expectedType = idMaybeTyped.type {
+        guard type.isSubtype(of: expectedType) else {
+            throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: expectedType)
+        }
+    }
+}
+
 private func inferType(_ exp: Exp) throws -> Type {
     switch exp {
-    case .eInt(_):
+    case .eInt:
         return .tType(.cTBase(.int), 1)
     case .eUnit:
         return .tType(.cTBase(.unit), 1)
@@ -365,14 +444,16 @@ private func checkAssertion(_ assertion: Assertion) throws {
 extension TypeCheckerError: CustomStringConvertible {
     public var description: String {
         switch self {
-        case let .functionAlreadyExists(id):
-            return "function `\(id.value)` already exists"
+        case let .nameAlreadyInUse(id: id, as: usageType):
+            return "unable to use Id `\(id)` because it is already used for a \(usageType)"
         case let .functionNotFound(id):
-            return "variable `\(id.value)` not found"
+            return "function `\(id.value)` not found"
         case let .exposedFunctionDoesNotReturnOPPType(function: id, returnType: type):
             return "exposed functions must always return an OPP type\n" +
             "function: \(id)" +
             "actual: \(type)"
+        case let .typeNotFound(id):
+            return "type `\(id.value)` not found"
         case let .variableAlreadyExists(id):
             return "variable `\(id.value)` already exists in context"
         case let .variableNotFound(id):
@@ -394,6 +475,10 @@ extension TypeCheckerError: CustomStringConvertible {
             return "assignment failed in statement" + "\n" +
             "statement: " + stm.show() + "\n" +
             "expected: pair type\n" +
+            "actual: \(actual)"
+        case let .conditionFailed(stm: stm, actual: actual):
+            return "condition must have an expression of sum type" + "\n" +
+            "statement: " + stm.show() + "\n" +
             "actual: \(actual)"
         case let .functionApplicationFailed(exp: exp, argsActual: actual, argsExpected: expected):
             return "invalid arguments to function in expression" + "\n" +
