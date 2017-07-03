@@ -1,6 +1,6 @@
 //test add_noise function application
 
 exposed func testAddNoise_0() -> Int!inf {
-let x: Int!1 = 10
+    let x: Int!1 = 10
     return add_noise(x)
 }
