@@ -30,8 +30,6 @@
 		2A9BA9851EE802EB00BE2F00 /* Lexer.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA97E1EE802EB00BE2F00 /* Lexer.c */; };
 		2A9BA9861EE802EB00BE2F00 /* Parser.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA97F1EE802EB00BE2F00 /* Parser.c */; };
 		2A9BA9871EE802EB00BE2F00 /* Parser.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A9BA9801EE802EB00BE2F00 /* Parser.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		2A9BA9881EE802EB00BE2F00 /* Printer.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA9811EE802EB00BE2F00 /* Printer.c */; };
-		2A9BA9891EE802EB00BE2F00 /* Printer.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A9BA9821EE802EB00BE2F00 /* Printer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2AA139591EEAAC2800389C66 /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA139581EEAAC2800389C66 /* Parser.swift */; };
 		2AA9D9111EE96F990078ABCF /* TypeChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA9D9101EE96F990078ABCF /* TypeChecker.swift */; };
 /* End PBXBuildFile section */
@@ -71,8 +69,6 @@
 		2A9BA97E1EE802EB00BE2F00 /* Lexer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Lexer.c; sourceTree = "<group>"; };
 		2A9BA97F1EE802EB00BE2F00 /* Parser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Parser.c; sourceTree = "<group>"; };
 		2A9BA9801EE802EB00BE2F00 /* Parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Parser.h; sourceTree = "<group>"; };
-		2A9BA9811EE802EB00BE2F00 /* Printer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Printer.c; sourceTree = "<group>"; };
-		2A9BA9821EE802EB00BE2F00 /* Printer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Printer.h; sourceTree = "<group>"; };
 		2AA139581EEAAC2800389C66 /* Parser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
 		2AA9D9101EE96F990078ABCF /* TypeChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeChecker.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -169,8 +165,6 @@
 				2A9BA97E1EE802EB00BE2F00 /* Lexer.c */,
 				2A9BA9801EE802EB00BE2F00 /* Parser.h */,
 				2A9BA97F1EE802EB00BE2F00 /* Parser.c */,
-				2A9BA9821EE802EB00BE2F00 /* Printer.h */,
-				2A9BA9811EE802EB00BE2F00 /* Printer.c */,
 				2A9BA9761EE802D500BE2F00 /* Info.plist */,
 			);
 			path = CGrammar;
@@ -186,7 +180,6 @@
 				2A9BA9871EE802EB00BE2F00 /* Parser.h in Headers */,
 				2A9BA9841EE802EB00BE2F00 /* Absyn.h in Headers */,
 				2A9BA9771EE802D500BE2F00 /* CGrammar.h in Headers */,
-				2A9BA9891EE802EB00BE2F00 /* Printer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -346,7 +339,6 @@
 			files = (
 				2A9BA9851EE802EB00BE2F00 /* Lexer.c in Sources */,
 				2A9BA9831EE802EB00BE2F00 /* Absyn.c in Sources */,
-				2A9BA9881EE802EB00BE2F00 /* Printer.c in Sources */,
 				2A9BA9861EE802EB00BE2F00 /* Parser.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

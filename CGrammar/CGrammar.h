@@ -16,4 +16,3 @@ FOUNDATION_EXPORT const unsigned char CGrammarVersionString[];
 
 #import <CGrammar/Absyn.h>
 #import <CGrammar/Parser.h>
-#import <CGrammar/Printer.h>
