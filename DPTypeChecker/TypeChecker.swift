@@ -402,8 +402,17 @@ private func inferType(_ exp: Exp) throws -> Type {
             throw TypeCheckerError.functionApplicationFailed(exp: exp, argsActual: expTypes, argsExpected: args)
         }
         return returnType
-    case let .eTyped(_, type):
+    case let .eTyped(exp, type):
         //TODO: for now this is accepted to get types where inferencing does not work yet but should be removed as soon as possible
+        do {
+            let inferredType = try inferType(exp)
+            if inferredType != type {
+                print("inferred type \(inferredType) for expression: " + exp.show() + "\nbut expression was annotated with type: \(type)")
+            }
+        }
+        catch let error as TypeCheckerError {
+            print("was not able to infer type for expression: " + exp.show() + "\ninferring failed with error: \(error)\nwill continue with annotated type: \(type)")
+        }
         return type
     }
 }
