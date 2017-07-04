@@ -35,6 +35,11 @@ class DPTypeCheckerTests: XCTestCase {
         testFiles(files)
     }
     
+    func testSum() {
+        let files = ["Sum_0.dpp", "Sum_1.dpp"]
+        testFiles(files)
+    }
+    
     func testFunctionApplication() {
         let files = ["FuncApply_0.dpp"]
         testFiles(files)

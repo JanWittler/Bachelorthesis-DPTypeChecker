@@ -12,20 +12,21 @@ ADecl.     Arg ::= Id ":" Type ;
 
 SInit.     Stm ::= "let" IdMaybeTyped "=" Exp ;
 SSplit.    Stm ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" Exp ;
-SCase.     Stm ::= "if" "(" IfCase ")" "{" [Stm] "}" "else" "{" [Stm] "}" ;
+SCase.     Stm ::= "if" "(" "case" IdMaybeTyped "=" Case Exp ")" "{" [Stm] "}" "else" "{" [Stm] "}" ;
 SReturn.   Stm ::= "return" Exp ;
 SAssert.   Stm ::= Assertion ;
 
 IdNotTyped. IdMaybeTyped ::= Id ;
 IdTyped.    IdMaybeTyped ::= Id ":" Type ;
 
-IfCaseLeft.  IfCase ::= "case" IdMaybeTyped "=" "inl" Exp ;
-IfCaseRight. IfCase ::= "case" IdMaybeTyped "=" "inr" Exp ;
+rules Case ::= "inl" | "inr" ;
 
 EInt.    Exp15 ::= Integer ;
 EUnit.   Exp15 ::= "(" ")" ;
 EId.     Exp15 ::= Id ;
 EPair.   Exp15 ::= "(" Exp "," Exp ")" ;
+ESum.    Exp15 ::= Ident "." Case "(" Exp ")" ;
+
 
 EApp.    Exp15 ::= Id "(" [Exp] ")" ;
 separator Exp "," ;
@@ -43,10 +44,11 @@ TTypeConvenienceInt. Type ::= CoreType "!" Integer ;
 CTBase.    CoreType ::= BaseType ;
 CTMulPair. CoreType ::= "(" Type "," Type ")" ;
 CTSum.     CoreType ::= "(" Type "+" Type ")" ;
+CTTypedef. CoreType ::= Ident ;
 
 rules BaseType ::= "Int" | "Unit" ;
 
-token Id (letter (letter | digit | '_')*) ;
+token Id (lower (letter | digit | '_')*) ;
 
 comment "//" ;
 comment "/*" "*/" ;

@@ -23,14 +23,22 @@ extension Type {
     }
     
     var coreType: CoreType {
+        let coreType: CoreType
         switch self {
         case let .tType(cType, _):
-            return cType
+            coreType = cType
         case let .tTypeConvenienceInt(cType, _):
-            return cType
+            coreType = cType
         case let .tTypeExponential(cType):
-            return cType
+            coreType = cType
         }
+        if case let .cTTypedef(id) = coreType {
+            do {
+                return try environment.lookupType(id).coreType
+            }
+            catch {}
+        }
+        return coreType
     }
 }
 
@@ -70,22 +78,18 @@ extension Arg {
     }
 }
 
-extension IfCase {
-    var exp: Exp {
-        switch self {
-        case let .ifCaseLeft(_, exp):
-            return exp
-        case let .ifCaseRight(_, exp):
-            return exp
+extension Case {
+    func unwrappedType(from type: Type, environment: Environment) throws -> Type {
+        //no need to handle .cTTypedef explicit, since it is handled in `Type.coreType` getter
+        guard case let .cTSum(lType, rType) = type.coreType else {
+            throw TypeCheckerError.caseApplicationFailed(case: self, actual: type)
         }
-    }
-    
-    var idMaybeTyped: IdMaybeTyped {
+        
         switch self {
-        case let .ifCaseLeft(idMaybeTyped, _):
-            return idMaybeTyped
-        case let .ifCaseRight(idMaybeTyped, _):
-            return idMaybeTyped
+        case .inl:
+            return lType
+        case .inr:
+            return rType
         }
     }
 }
@@ -103,7 +107,10 @@ extension Type {
             return bType1 == bType2
         case (let .cTMulPair(pair1), let .cTMulPair(pair2)):
             return pair1.0.isSubtype(of:pair2.0) && pair1.1.isSubtype(of:pair2.1)
+        case (let .cTSum(sum1), let .cTSum(sum2)):
+            return sum1.0.isSubtype(of: sum2.0) && sum2.0.isSubtype(of: sum2.0)
         default:
+            //no need to handle .cTTypedef explicit, since it is handled in `Type.coreType` getter
             return false
         }
     }
@@ -126,6 +133,15 @@ extension CoreType {
             return type1.isOPPType && type2.isOPPType
         case let .cTSum(lType, rType):
             return lType.isOPPType && rType.isOPPType
+        case let .cTTypedef(id):
+            do {
+                let type = try environment.lookupType(id)
+                return type.isOPPType
+            }
+            catch {
+                //computed getters cannot throw, thus we must return a default value
+                return false
+            }
         }
     }
 }
@@ -145,7 +161,10 @@ extension CoreType: Equatable {
             return true
         case (let .cTMulPair(pair1), let .cTMulPair(pair2)) where pair1 == pair2:
             return true
+        case (let .cTSum(sum1), let .cTSum(sum2)) where sum1 == sum2:
+            return true
         default:
+            //no need to handle .cTTypedef explicit, since it is handled in `Type.coreType` getter
             return false
         }
     }
@@ -173,6 +192,15 @@ extension CoreType: CustomStringConvertible {
             return "(\(t1.internalDescription) ⊗ \(t2.internalDescription))"
         case let .cTSum(lType, rType):
             return "(\(lType.internalDescription) + \(rType.internalDescription))"
+        case let .cTTypedef(id):
+            do {
+                let type = try environment.lookupType(id)
+                return type.coreType.description
+            }
+            catch {
+                //computed getters cannot throw, thus we must return a default value
+                return "\(id.value)"
+            }
         }
     }
 }

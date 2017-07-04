@@ -22,14 +22,15 @@ public enum TypeCheckerError: Error {
     case missingReturn(function: Id)
     case invalidReturnType(actual: Type, expected: Type)
     case splitFailed(stm: Stm, actual: Type)
-    case conditionFailed(stm: Stm, actual: Type)
+    case caseApplicationFailed(case: Case, actual: Type)
+    case mismatchingTypesForSumType(actual: Type, expected: Type)
     case functionApplicationFailed(exp: Exp, argsActual: [Type], argsExpected: [Type])
     case assertionFailed(String)
     case addNoiseFailed(message: String)
     case other(String)
 }
 
-private struct Environment {
+internal struct Environment {
     private enum GlobalElement {
         case addNoise
         case function(args: [Type], returnType: Type)
@@ -164,7 +165,7 @@ private struct Environment {
     }
 }
 
-private struct Context {
+internal struct Context {
     private var values : [Id : (Type, Double)] = [:]
     
     mutating func add(_ id: Id, type: Type) throws {
@@ -212,7 +213,7 @@ private struct Context {
     }
 }
 
-private var environment = Environment()
+internal var environment = Environment()
 
 func typeCheck(_ program: Program) throws {
     environment = Environment()
@@ -272,6 +273,8 @@ private func containsReturnStatement(_ stms: [Stm]) -> Bool {
         switch stm {
         case .sReturn:
             isReturn = true
+        case let .sCase(_, _, _, ifStms, elseStms):
+            isReturn = containsReturnStatement(ifStms) && containsReturnStatement(elseStms)
         default:
             isReturn = false
         }
@@ -319,29 +322,20 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         try environment.addToCurrentContext(id1, type: .tType(type1.coreType, type1.replicationCount * maxFactor))
         try environment.addToCurrentContext(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
         
-    case let .sCase(cond, ifStms, elseStms):
+    case let .sCase(idMaybeTyped, sumCase, exp, ifStms, elseStms):
         environment.pushContext()
         
-        let condType = try inferType(cond.exp)
-        guard case let .cTSum(lType, rType) = condType.coreType else {
-            throw TypeCheckerError.conditionFailed(stm: stm, actual: condType)
-        }
-        var unwrappedType: Type
-        switch cond {
-        case .ifCaseLeft:
-            unwrappedType = lType
-        case .ifCaseRight:
-            unwrappedType = rType
-        }
-        try checkIfIdMaybeTyped(cond.idMaybeTyped, matchesType: unwrappedType, inStm: stm)
-        if let type = cond.idMaybeTyped.type {
+        let condType = try inferType(exp)
+        var unwrappedType = try sumCase.unwrappedType(from: condType, environment: environment)
+        try checkIfIdMaybeTyped(idMaybeTyped, matchesType: unwrappedType, inStm: stm)
+        if let type = idMaybeTyped.type {
             let differingFactor = type.replicationCount / unwrappedType.replicationCount
             //TODO: there is no real need to scale everything
             // but rather only those parts that are affected by the assignment
             try environment.scale(by: differingFactor)
             unwrappedType = type
         }
-        try environment.addToCurrentContext(cond.idMaybeTyped.id, type: unwrappedType)
+        try environment.addToCurrentContext(idMaybeTyped.id, type: unwrappedType)
         
         try ifStms.forEach { try checkStm($0, expectedReturnType: expectedReturnType) }
         environment.popContext()
@@ -391,13 +385,22 @@ private func inferType(_ exp: Exp) throws -> Type {
         let type1 = try inferType(e1)
         let type2 = try inferType(e2)
         return .tType(.cTMulPair(type1, type2), 1)
+    case let .eSum(typeId, sumCase, exp):
+        let type = try environment.lookupType(typeId)
+        let expType = try inferType(exp)
+        let requiredType = try sumCase.unwrappedType(from: type, environment: environment)
+        //TODO: if not check if expType is subtype of required type and then scale by differing factor
+        guard requiredType.isSubtype(of: expType) else {
+            throw TypeCheckerError.mismatchingTypesForSumType(actual: expType, expected: requiredType)
+        }
+        return .tType(type.coreType, 1)
     case let .eApp(id, exps):
         guard id != addNoiseId else {
             return try handleAddNoise(exps)
         }
         let (args, returnType) = try environment.lookupFunction(id)
         let expTypes = try exps.map { try inferType($0) }
-        //TODO: if expTypes[i].isSubtype(type[i]) -> scale by differing factor but this requires scaling to work only on the values that are involved
+        //TODO: if expTypes[i].isSubtype(args[i]) -> scale by differing factor but this requires scaling to work only on the values that are involved
         guard args == expTypes else {
             throw TypeCheckerError.functionApplicationFailed(exp: exp, argsActual: expTypes, argsExpected: args)
         }
@@ -485,9 +488,11 @@ extension TypeCheckerError: CustomStringConvertible {
             "statement: " + stm.show() + "\n" +
             "expected: pair type\n" +
             "actual: \(actual)"
-        case let .conditionFailed(stm: stm, actual: actual):
-            return "condition must have an expression of sum type" + "\n" +
-            "statement: " + stm.show() + "\n" +
+        case let .caseApplicationFailed(case: `case`, actual: actual):
+            return "failed to apply " + `case`.show() + " on expression of type \(actual)"
+        case let .mismatchingTypesForSumType(actual: actual, expected: expected):
+            return "mismatching types when trying to construct sum type" + "\n" +
+            "expected: \(expected)\n" +
             "actual: \(actual)"
         case let .functionApplicationFailed(exp: exp, argsActual: actual, argsExpected: expected):
             return "invalid arguments to function in expression" + "\n" +
