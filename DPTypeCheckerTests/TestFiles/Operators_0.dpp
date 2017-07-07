@@ -1,0 +1,28 @@
+//numeric operators
+func testOperators_0() -> Unit!1 {
+    let x: Int!5 = 10
+    let y: Int!3 = 20
+    let z = x + y
+    assertTypeEqual(x, Int!4)
+    assertTypeEqual(y, Int!2)
+    assertTypeEqual(z, Int!1)
+
+    let w: Int!2 = x - y
+    assertTypeEqual(x, Int!2)
+    assertTypeEqual(y, Int!0)
+    assertTypeEqual(w, Int!2)
+
+    let a: Float!5 = 4.2
+    let b: Float!3 = 2.4
+    let c: Float!2 = a + b
+    assertTypeEqual(a, Float!3)
+    assertTypeEqual(b, Float!1)
+    assertTypeEqual(c, Float!2)
+
+    let d = a - b
+    assertTypeEqual(a, Float!2)
+    assertTypeEqual(b, Float!0)
+    assertTypeEqual(d, Float!1)
+
+    return ()
+}
