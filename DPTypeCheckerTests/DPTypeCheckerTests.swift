@@ -9,8 +9,8 @@
 import XCTest
 
 class DPTypeCheckerTests: XCTestCase {
-    func testBasicTyping() {
-        let files = ["Typing.dpp"]
+    func testCoreTypes() {
+        let files = ["CoreTypes.dpp"]
         testFiles(files)
     }
     

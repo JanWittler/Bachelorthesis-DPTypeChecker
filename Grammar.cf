@@ -24,10 +24,11 @@ rules Case ::= "inl" | "inr" ;
 EInt.    Exp15 ::= Integer ;
 EFloat.  Exp15 ::= Double ;
 EUnit.   Exp15 ::= "(" ")" ;
+ETrue.   Exp15 ::= "true" ;
+EFalse.  Exp15 ::= "false" ;
 EId.     Exp15 ::= Id ;
 EPair.   Exp15 ::= "(" Exp "," Exp ")" ;
 ESum.    Exp15 ::= Ident "." Case "(" Exp ")" ;
-
 
 EApp.    Exp15 ::= Id "(" [Exp] ")" ;
 

@@ -9,6 +9,7 @@
 import Foundation
 
 private let addNoiseId = Id("add_noise")
+private let boolTypeIdent = Ident("Bool")
 
 public enum TypeCheckerError: Error {
     case nameAlreadyInUse(id: String, as: String)
@@ -71,7 +72,9 @@ internal struct Environment {
     
     //the `add_noise` function is present in every environment
     private var globals: [String : GlobalElement] = [
-        addNoiseId.value : .addNoise
+        addNoiseId.value : .addNoise,
+        //Bool = (Unit!inf + Unit!inf)!1
+        boolTypeIdent.value : .typedef(type: .tType(.cTSum(.tTypeExponential(.cTBase(.unit)), .tTypeExponential(.cTBase(.unit))), 1))
     ]
     
     private mutating func addGlobal(_ global: GlobalElement, forId id: String) throws {
@@ -397,6 +400,10 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
         return (.tType(.cTBase(.float), 1), Environment.Delta())
     case .eUnit:
         return (.tType(.cTBase(.unit), 1), Environment.Delta())
+    case .eTrue:
+        fallthrough
+    case .eFalse:
+        return (try environment.lookupType(boolTypeIdent), Environment.Delta())
     case let .eId(id):
         let type = try environment.lookup(id)
         let returnType = Type.tType(type.coreType, 1)
