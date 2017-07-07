@@ -220,6 +220,8 @@ extension BaseType: CustomStringConvertible {
         switch self {
         case .int:
             return "Int"
+        case .float:
+            return "Float"
         case .unit:
             return "Unit"
         }

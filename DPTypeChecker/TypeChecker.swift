@@ -393,6 +393,8 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
     switch exp {
     case .eInt:
         return (.tType(.cTBase(.int), 1), Environment.Delta())
+    case .eFloat:
+        return (.tType(.cTBase(.float), 1), Environment.Delta())
     case .eUnit:
         return (.tType(.cTBase(.unit), 1), Environment.Delta())
     case let .eId(id):
@@ -518,7 +520,10 @@ private func handleAddNoise(_ exps: [Exp]) throws -> Type {
 private func handleEPlusOrEMinus(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp) throws -> (Type, Environment.Delta) {
     let (type1, delta1) = try inferType(e1)
     let (type2, delta2) = try inferType(e2)
-    let allowedTypes: [Type] = [.tType(.cTBase(.int), 1)]
+    let allowedTypes: [Type] = [
+        .tType(.cTBase(.int), 1),
+        .tType(.cTBase(.float), 1)
+    ]
     for allowedType in allowedTypes {
         if allowedType.coreType == type1.coreType && allowedType.coreType == type2.coreType {
             //instead of subtyping to replication count 1, rather subtype only so far that type1 and type2 match

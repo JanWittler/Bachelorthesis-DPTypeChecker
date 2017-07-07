@@ -22,6 +22,7 @@ IdTyped.    IdMaybeTyped ::= Id ":" Type ;
 rules Case ::= "inl" | "inr" ;
 
 EInt.    Exp15 ::= Integer ;
+EFloat.  Exp15 ::= Double ;
 EUnit.   Exp15 ::= "(" ")" ;
 EId.     Exp15 ::= Id ;
 EPair.   Exp15 ::= "(" Exp "," Exp ")" ;
@@ -52,7 +53,7 @@ CTFunction.CoreType ::= "(" "(" [Type] ")" "->" Type ")" ;
 
 separator Type "," ;
 
-rules BaseType ::= "Int" | "Unit" ;
+rules BaseType ::= "Int" | "Float" | "Unit" ;
 
 token Id (lower (letter | digit | '_')*) ;
 
