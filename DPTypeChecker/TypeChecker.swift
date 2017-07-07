@@ -312,11 +312,10 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
     switch stm {
     case let .sInit(idMaybeTyped, exp):
         var (expType, envDelta) = try inferType(exp)
-        let varType = idMaybeTyped.type ?? expType
-        try checkIfIdMaybeTyped(idMaybeTyped, matchesType: expType, inStm: stm)
+        var varType = expType
         if let type = idMaybeTyped.type {
-            let differingFactor = type.replicationCount / expType.replicationCount
-            envDelta.scale(by: differingFactor)
+            try makeType(expType, matchRequiredType: type, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: expType, expected: type))
+            varType = type
         }
         try environment.applyDelta(envDelta)
         try environment.addToCurrentContext(idMaybeTyped.id, type: varType)
@@ -353,8 +352,7 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         var unwrappedType = try sumCase.unwrappedType(from: condType, environment: environment)
         try checkIfIdMaybeTyped(idMaybeTyped, matchesType: unwrappedType, inStm: stm)
         if let type = idMaybeTyped.type {
-            let differingFactor = type.replicationCount / unwrappedType.replicationCount
-            envDelta.scale(by: differingFactor)
+            try makeType(condType, matchRequiredType: type, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: condType, expected: type))
             unwrappedType = type
         }
         try environment.applyDelta(envDelta)
@@ -369,14 +367,7 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         
     case let .sReturn(exp):
         var (expType, envDelta) = try inferType(exp)
-        guard expType.isSubtype(of: expectedReturnType) else {
-            throw TypeCheckerError.invalidReturnType(actual: expType, expected: expectedReturnType)
-        }
-        //if the expression is exponential and the return type is a subtype of it, it must be exponential too, so no need to scale
-        if expType.replicationCount < Double.infinity {
-            let differingFactor = expectedReturnType.replicationCount / expType.replicationCount
-            envDelta.scale(by: differingFactor)
-        }
+        try makeType(expType, matchRequiredType: expectedReturnType, withDelta: &envDelta, errorForFailure: .invalidReturnType(actual: expType, expected: expectedReturnType))
         try environment.applyDelta(envDelta)
         
     case let .sAssert(assertion):

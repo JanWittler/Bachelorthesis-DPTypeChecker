@@ -45,6 +45,9 @@ CTBase.    CoreType ::= BaseType ;
 CTMulPair. CoreType ::= "(" Type "," Type ")" ;
 CTSum.     CoreType ::= "(" Type "+" Type ")" ;
 CTTypedef. CoreType ::= Ident ;
+CTFunction.CoreType ::= "(" "(" [Type] ")" "->" Type ")" ;
+
+separator Type "," ;
 
 rules BaseType ::= "Int" | "Unit" ;
 
