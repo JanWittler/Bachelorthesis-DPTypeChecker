@@ -1,0 +1,7 @@
+//test curried function application
+
+func testFuncApply_1(x: ((Int!1) -> Int!1)!3) -> Int!1 {
+    let y = x(10)
+    assertTypeEqual(x, ((Int!1) -> Int!1)!2)
+    return y
+}

@@ -23,8 +23,9 @@ public enum TypeCheckerError: Error {
     case invalidReturnType(actual: Type, expected: Type)
     case splitFailed(stm: Stm, actual: Type)
     case caseApplicationFailed(case: Case, actual: Type)
-    case mismatchingTypesForSumType(actual: Type, expected: Type)
-    case functionApplicationFailed(exp: Exp, argsActual: [Type], argsExpected: [Type])
+    case mismatchingTypesForSumType(exp: Exp, actual: Type, expected: Type)
+    case tooManyArgumentsToFunction(exp: Exp, actualCount: Int, expectedCount: Int)
+    case mismatchingTypeForFunctionArgument(exp: Exp, index: Int, actual: Type, expected: Type)
     case assertionFailed(String)
     case addNoiseFailed(message: String)
     case other(String)
@@ -346,6 +347,10 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         try environment.addToCurrentContext(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
         
     case let .sCase(idMaybeTyped, sumCase, exp, ifStms, elseStms):
+        //TODO: case handling must be corrected
+        // case handling is wrong since both if and else blocks may access variables outside the topmost context
+        // but if they do, the other contexts are contain changes of both the if and else block, which may result in wrong usage count for following statements
+        // correct would be to branch and evaluate the if branch and all subsequent calls and after that the else branch with all subsequent calls and with the same environment as the if branch started with 
         environment.pushContext()
         
         var (condType, envDelta) = try inferType(exp)
@@ -405,21 +410,57 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
         let type = try environment.lookupType(typeId)
         var (expType, delta) = try inferType(exp)
         let requiredType = try sumCase.unwrappedType(from: type, environment: environment)
-        try makeType(expType, matchRequiredType: requiredType, withDelta: &delta, errorForFailure: .mismatchingTypesForSumType(actual: expType, expected: requiredType))
+        try makeType(expType, matchRequiredType: requiredType, withDelta: &delta, errorForFailure: .mismatchingTypesForSumType(exp: exp, actual: expType, expected: requiredType))
         return (.tType(type.coreType, 1), delta)
     case let .eApp(id, exps):
         guard id != addNoiseId else {
             return (try handleAddNoise(exps), Environment.Delta())
         }
-        let (args, returnType) = try environment.lookupFunction(id)
-        let expTypesAndDeltas = try exps.map { try inferType($0) }
-        let expTypes = expTypesAndDeltas.map { $0.0 }
-        let delta = expTypesAndDeltas.map { $0.1 }.reduce(Environment.Delta()) { $0.merge(with: $1) }
-        //TODO: if expTypes[i].isSubtype(args[i]) -> scale by differing factor but this requires scaling to work only on the values that are involved
-        guard args == expTypes else {
-            throw TypeCheckerError.functionApplicationFailed(exp: exp, argsActual: expTypes, argsExpected: args)
+        
+        let args: [Type], returnType: Type
+        var delta = Environment.Delta()
+        
+        do {
+            (args, returnType) = try environment.lookupFunction(id)
         }
-        return (returnType, delta)
+        //if there was not function with the id, check if there is a variable with the id which has a function type
+        catch let functionError {
+            do {
+                let idType = try environment.lookup(id)
+                guard case let .cTFunction(aType, rType) = idType.coreType else {
+                    throw functionError
+                }
+                delta.updateUsageCount(for: id, delta: 1)
+                args = aType
+                returnType = rType
+            }
+            //catch errors to throw the original function lookup error instead of the variable lookup one
+            catch {
+                throw functionError
+            }
+        }
+        
+        guard exps.count <= args.count else {
+            throw TypeCheckerError.tooManyArgumentsToFunction(exp: exp, actualCount: exps.count, expectedCount: args.count)
+        }
+        
+        let expTypesAndDeltas = try exps.map { try inferType($0) }
+        for i in 0..<expTypesAndDeltas.count {
+            var (argType, argDelta) = expTypesAndDeltas[i]
+            let requiredType = args[i]
+            try makeType(argType, matchRequiredType: requiredType, withDelta: &argDelta, errorForFailure: .mismatchingTypeForFunctionArgument(exp: exp, index: i, actual: argType, expected: requiredType))
+            delta = delta.merge(with: argDelta)
+        }
+        
+        if (exps.count == args.count) {
+            return (returnType, delta)
+        }
+        else { //allow for currying
+            let missingArgs = args.dropFirst(exps.count)
+            let functionType = CoreType.cTFunction(Array(missingArgs), returnType)
+            let returnType = Type.tType(functionType, 1)
+            return (returnType, delta)
+        }
     case let .eTyped(exp, type):
         //TODO: for now this is accepted to get types where inferencing does not work yet but should be removed as soon as possible
         do {
@@ -530,15 +571,21 @@ extension TypeCheckerError: CustomStringConvertible {
             "actual: \(actual)"
         case let .caseApplicationFailed(case: `case`, actual: actual):
             return "failed to apply " + `case`.show() + " on expression of type \(actual)"
-        case let .mismatchingTypesForSumType(actual: actual, expected: expected):
+        case let .mismatchingTypesForSumType(exp: exp, actual: actual, expected: expected):
             return "mismatching types when trying to construct sum type" + "\n" +
+            "expression: " + exp.show() + "\n" +
             "expected: \(expected)\n" +
             "actual: \(actual)"
-        case let .functionApplicationFailed(exp: exp, argsActual: actual, argsExpected: expected):
-            return "invalid arguments to function in expression" + "\n" +
+        case let .tooManyArgumentsToFunction(exp: exp, actualCount: actual, expectedCount: expected):
+            return "too many arguments to function" + "\n" +
             "expression: " + exp.show() + "\n" +
-                "expected: (\(expected.reduce("", {$0 + ($0.isEmpty ? "" : ", ") + $1.description })))\n" +
-            "actual: (\(actual.reduce("", {$0 + ($0.isEmpty ? "" : ", ") + $1.description })))"
+            "expected: \(expected)\n" +
+            "actual: \(actual)"
+        case let .mismatchingTypeForFunctionArgument(exp: exp, index: index, actual: actual, expected: expected):
+            return "argument at index \(index) has mismatching type in function application" + "\n" +
+            "expression: " + exp.show() + "\n" +
+            "expected: \(expected)\n" +
+            "actual: \(actual)"
         case let .assertionFailed(message):
             return message
         case let.addNoiseFailed(message: message):
