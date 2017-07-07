@@ -26,6 +26,7 @@ public enum TypeCheckerError: Error {
     case mismatchingTypesForSumType(exp: Exp, actual: Type, expected: Type)
     case tooManyArgumentsToFunction(exp: Exp, actualCount: Int, expectedCount: Int)
     case mismatchingTypeForFunctionArgument(exp: Exp, index: Int, actual: Type, expected: Type)
+    case noOperatorOverloadFound(exp: Exp, types: [Type])
     case assertionFailed(String)
     case addNoiseFailed(message: String)
     case other(String)
@@ -461,6 +462,10 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
             let returnType = Type.tType(functionType, 1)
             return (returnType, delta)
         }
+    case let .ePlus(e1, e2):
+        return try handleEPlusOrEMinus(e1, e2, originalExpression: exp)
+    case let .eMinus(e1, e2):
+        return try handleEPlusOrEMinus(e1, e2, originalExpression: exp)
     case let .eTyped(exp, type):
         //TODO: for now this is accepted to get types where inferencing does not work yet but should be removed as soon as possible
         do {
@@ -508,6 +513,21 @@ private func handleAddNoise(_ exps: [Exp]) throws -> Type {
         throw TypeCheckerError.addNoiseFailed(message: "adding noise to an exponential type would result in an unusable result and is therefore forbidden")
     }
     return .tTypeExponential(expType.coreType)
+}
+
+private func handleEPlusOrEMinus(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp) throws -> (Type, Environment.Delta) {
+    let (type1, delta1) = try inferType(e1)
+    let (type2, delta2) = try inferType(e2)
+    let allowedTypes: [Type] = [.tType(.cTBase(.int), 1)]
+    for allowedType in allowedTypes {
+        if allowedType.coreType == type1.coreType && allowedType.coreType == type2.coreType {
+            //instead of subtyping to replication count 1, rather subtype only so far that type1 and type2 match
+            let lowerReplicationCount = min(type1.replicationCount, type2.replicationCount)
+            let resultType = Type.tType(allowedType.coreType, lowerReplicationCount)
+            return (resultType, delta1.merge(with:delta2))
+        }
+    }
+    throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
 }
 
 private func checkAssertion(_ assertion: Assertion) throws {
@@ -586,6 +606,10 @@ extension TypeCheckerError: CustomStringConvertible {
             "expression: " + exp.show() + "\n" +
             "expected: \(expected)\n" +
             "actual: \(actual)"
+        case let .noOperatorOverloadFound(exp: exp, types: types):
+            return "no operator overload found that matches found types" + "\n" +
+            "expression: " + exp.show() + "\n" +
+                "types: " + types.map { $0.description }.joined(separator: ", ")
         case let .assertionFailed(message):
             return message
         case let.addNoiseFailed(message: message):

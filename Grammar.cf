@@ -29,10 +29,13 @@ ESum.    Exp15 ::= Ident "." Case "(" Exp ")" ;
 
 
 EApp.    Exp15 ::= Id "(" [Exp] ")" ;
-separator Exp "," ;
+
+EPlus.    Exp11 ::= Exp11 "+"  Exp12 ;
+EMinus.   Exp11 ::= Exp11 "-"  Exp12 ;
 
 internal ETyped. Exp ::= "(" Exp ":" Type ")" ;
 
+separator Exp "," ;
 coercions Exp 15 ;
 
 ATypeEqual. Assertion ::= "assertTypeEqual" "(" Id "," Type ")" ;
