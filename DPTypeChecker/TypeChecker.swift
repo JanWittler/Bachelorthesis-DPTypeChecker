@@ -37,6 +37,36 @@ internal struct Environment {
         case typedef(type: Type)
     }
     
+    struct Delta {
+        private(set) var changes: [Id : Double] = [:]
+        
+        mutating func updateUsageCount(for id: Id, delta: Double) {
+            precondition(delta > 0, "the given delta must be greater than zero")
+            let value = changes[id] ?? 0
+            changes[id] = value + delta
+            
+        }
+        
+        mutating func scale(by factor: Double) {
+            precondition(factor >= 1, "scaling to lower count invalid")
+            changes = changes.reduce([Id : Double]()) {
+                var dict = $0
+                let (key, value) = $1
+                dict[key] = value * factor
+                return dict
+            }
+        }
+        
+        func merge(with other: Delta) -> Delta {
+            var new = Delta()
+            new.changes = changes
+            other.changes.forEach {
+                new.updateUsageCount(for: $0, delta: $1)
+            }
+            return new
+        }
+    }
+    
     //the `add_noise` function is present in every environment
     private var globals: [String : GlobalElement] = [
         addNoiseId.value : .addNoise
@@ -137,7 +167,13 @@ internal struct Environment {
         throw TypeCheckerError.variableNotFound(id)
     }
     
-    mutating func updateUsageCount(for id: Id, delta: Double) throws {
+    mutating func applyDelta(_ delta: Delta) throws {
+        try delta.changes.forEach {
+            try updateUsageCount(for: $0, delta: $1)
+        }
+    }
+    
+    private mutating func updateUsageCount(for id: Id, delta: Double) throws {
         var index = contexts.count - 1
         while index >= 0 {
             do {
@@ -152,16 +188,6 @@ internal struct Environment {
             index -= 1
         }
         throw TypeCheckerError.variableNotFound(id)
-    }
-    
-    mutating func scale(by factor: Double) throws {
-        precondition(factor >= 1, "scaling to lower count invalid")
-        
-        for i in 0..<contexts.count {
-            var context = contexts[i]
-            try context.scale(by: factor)
-            contexts[i] = context
-        }
     }
 }
 
@@ -285,19 +311,18 @@ private func containsReturnStatement(_ stms: [Stm]) -> Bool {
 private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
     switch stm {
     case let .sInit(idMaybeTyped, exp):
-        let expType = try inferType(exp)
+        var (expType, envDelta) = try inferType(exp)
         let varType = idMaybeTyped.type ?? expType
         try checkIfIdMaybeTyped(idMaybeTyped, matchesType: expType, inStm: stm)
         if let type = idMaybeTyped.type {
             let differingFactor = type.replicationCount / expType.replicationCount
-            //TODO: there is no real need to scale everything
-            // but rather only those parts that are affected by the assignment
-            try environment.scale(by: differingFactor)
+            envDelta.scale(by: differingFactor)
         }
+        try environment.applyDelta(envDelta)
         try environment.addToCurrentContext(idMaybeTyped.id, type: varType)
         
     case let .sSplit(idMaybeTyped1, idMaybeTyped2, exp):
-        let expType = try inferType(exp)
+        var (expType, envDelta) = try inferType(exp)
         guard case let .cTMulPair(type1, type2) = expType.coreType else {
             throw TypeCheckerError.splitFailed(stm: stm, actual: expType)
         }
@@ -314,27 +339,25 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
             factor2 = type.replicationCount / type2.replicationCount
         }
         let maxFactor = max(factor1, factor2)
-        try environment.scale(by: maxFactor)
+        envDelta.scale(by: maxFactor)
         //since both variables are scaled by `maxFactor` it would be wrong to use the annotated types, rather we need to compute the scaled type from the inferred type
         //note: if the `maxFactor` is equal to the factor of the component, the scaled type will match the annotated type
-        //TODO: there is no real need to scale everything
-        // but rather only those parts that are affected by the assignment
+        try environment.applyDelta(envDelta)
         try environment.addToCurrentContext(id1, type: .tType(type1.coreType, type1.replicationCount * maxFactor))
         try environment.addToCurrentContext(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
         
     case let .sCase(idMaybeTyped, sumCase, exp, ifStms, elseStms):
         environment.pushContext()
         
-        let condType = try inferType(exp)
+        var (condType, envDelta) = try inferType(exp)
         var unwrappedType = try sumCase.unwrappedType(from: condType, environment: environment)
         try checkIfIdMaybeTyped(idMaybeTyped, matchesType: unwrappedType, inStm: stm)
         if let type = idMaybeTyped.type {
             let differingFactor = type.replicationCount / unwrappedType.replicationCount
-            //TODO: there is no real need to scale everything
-            // but rather only those parts that are affected by the assignment
-            try environment.scale(by: differingFactor)
+            envDelta.scale(by: differingFactor)
             unwrappedType = type
         }
+        try environment.applyDelta(envDelta)
         try environment.addToCurrentContext(idMaybeTyped.id, type: unwrappedType)
         
         try ifStms.forEach { try checkStm($0, expectedReturnType: expectedReturnType) }
@@ -345,17 +368,16 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         environment.popContext()
         
     case let .sReturn(exp):
-        let expType = try inferType(exp)
+        var (expType, envDelta) = try inferType(exp)
         guard expType.isSubtype(of: expectedReturnType) else {
             throw TypeCheckerError.invalidReturnType(actual: expType, expected: expectedReturnType)
         }
         //if the expression is exponential and the return type is a subtype of it, it must be exponential too, so no need to scale
         if expType.replicationCount < Double.infinity {
             let differingFactor = expectedReturnType.replicationCount / expType.replicationCount
-            //TODO: there is no real need to scale everything
-            // but rather only those parts that are affected by the assignment
-            try environment.scale(by: differingFactor)
+            envDelta.scale(by: differingFactor)
         }
+        try environment.applyDelta(envDelta)
         
     case let .sAssert(assertion):
         try checkAssertion(assertion)
@@ -370,53 +392,71 @@ private func checkIfIdMaybeTyped(_ idMaybeTyped: IdMaybeTyped, matchesType type:
     }
 }
 
-private func inferType(_ exp: Exp) throws -> Type {
+private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
     switch exp {
     case .eInt:
-        return .tType(.cTBase(.int), 1)
+        return (.tType(.cTBase(.int), 1), Environment.Delta())
     case .eUnit:
-        return .tType(.cTBase(.unit), 1)
+        return (.tType(.cTBase(.unit), 1), Environment.Delta())
     case let .eId(id):
         let type = try environment.lookup(id)
         let returnType = Type.tType(type.coreType, 1)
-        try environment.updateUsageCount(for: id, delta: 1)
-        return returnType
+        var delta = Environment.Delta()
+        delta.updateUsageCount(for: id, delta: 1)
+        return (returnType, delta)
     case let .ePair(e1, e2):
-        let type1 = try inferType(e1)
-        let type2 = try inferType(e2)
-        return .tType(.cTMulPair(type1, type2), 1)
+        let (type1, delta1) = try inferType(e1)
+        let (type2, delta2) = try inferType(e2)
+        let returnType = Type.tType(.cTMulPair(type1, type2), 1)
+        let delta = delta1.merge(with: delta2)
+        return (returnType, delta)
     case let .eSum(typeId, sumCase, exp):
         let type = try environment.lookupType(typeId)
-        let expType = try inferType(exp)
+        var (expType, delta) = try inferType(exp)
         let requiredType = try sumCase.unwrappedType(from: type, environment: environment)
-        //TODO: if not check if expType is subtype of required type and then scale by differing factor
-        guard requiredType.isSubtype(of: expType) else {
-            throw TypeCheckerError.mismatchingTypesForSumType(actual: expType, expected: requiredType)
-        }
-        return .tType(type.coreType, 1)
+        try makeType(expType, matchRequiredType: requiredType, withDelta: &delta, errorForFailure: .mismatchingTypesForSumType(actual: expType, expected: requiredType))
+        return (.tType(type.coreType, 1), delta)
     case let .eApp(id, exps):
         guard id != addNoiseId else {
-            return try handleAddNoise(exps)
+            return (try handleAddNoise(exps), Environment.Delta())
         }
         let (args, returnType) = try environment.lookupFunction(id)
-        let expTypes = try exps.map { try inferType($0) }
+        let expTypesAndDeltas = try exps.map { try inferType($0) }
+        let expTypes = expTypesAndDeltas.map { $0.0 }
+        let delta = expTypesAndDeltas.map { $0.1 }.reduce(Environment.Delta()) { $0.merge(with: $1) }
         //TODO: if expTypes[i].isSubtype(args[i]) -> scale by differing factor but this requires scaling to work only on the values that are involved
         guard args == expTypes else {
             throw TypeCheckerError.functionApplicationFailed(exp: exp, argsActual: expTypes, argsExpected: args)
         }
-        return returnType
+        return (returnType, delta)
     case let .eTyped(exp, type):
         //TODO: for now this is accepted to get types where inferencing does not work yet but should be removed as soon as possible
         do {
-            let inferredType = try inferType(exp)
-            if inferredType != type {
+            let (inferredType, delta) = try inferType(exp)
+            if inferredType == type {
+                return (type, delta)
+            }
+            else {
                 print("inferred type \(inferredType) for expression: " + exp.show() + "\nbut expression was annotated with type: \(type)")
             }
         }
         catch let error as TypeCheckerError {
             print("was not able to infer type for expression: " + exp.show() + "\ninferring failed with error: \(error)\nwill continue with annotated type: \(type)")
         }
-        return type
+        return (type, Environment.Delta())
+    }
+}
+
+private func makeType(_ type: Type, matchRequiredType requiredType: Type, withDelta delta: inout Environment.Delta, errorForFailure: TypeCheckerError) throws {
+    if !requiredType.isSubtype(of: type) {
+        //if possible, scale expression up to match required type
+        if type.coreType == requiredType.coreType {
+            let differingFactor = requiredType.replicationCount / type.replicationCount
+            delta.scale(by: differingFactor)
+        }
+        else {
+            throw errorForFailure
+        }
     }
 }
 
@@ -425,7 +465,9 @@ private func handleAddNoise(_ exps: [Exp]) throws -> Type {
         throw TypeCheckerError.addNoiseFailed(message: "the add_noise construct requires exactly one argument but was provided \(exps.count)\nnamely \(exps)")
     }
     let exp = exps.first!
-    let expType = try inferType(exp)
+    let (expType, delta) = try inferType(exp)
+    //apply delta directly, because it must not be scaled after `add_noise` was applied
+    try environment.applyDelta(delta)
     let allowedBaseTypes: [BaseType] = [.int]
     guard case let .cTBase(baseType) = expType.coreType, allowedBaseTypes.contains(baseType) else {
         throw TypeCheckerError.addNoiseFailed(message: "invalid type for adding noise to\ntype: \(expType)\nin expression: \(exp)")
@@ -441,7 +483,14 @@ private func checkAssertion(_ assertion: Assertion) throws {
     case let .aTypeEqual(id, type):
         let idType = try environment.lookup(id)
         let usageCount = try environment.lookupUsageCount(id)
-        let updatedType = Type.tType(idType.coreType, idType.replicationCount - usageCount)
+        let updatedType: Type
+        if idType.replicationCount == Double.infinity {
+            //exponential types will always be exponentials, independent of usage count
+            updatedType = idType
+        }
+        else {
+            updatedType = Type.tType(idType.coreType, idType.replicationCount - usageCount)
+        }
         guard updatedType == type else {
             let errorMessage = "variable `\(id.value)` does not match type\n" +
                 "expected: \(type)\n" +

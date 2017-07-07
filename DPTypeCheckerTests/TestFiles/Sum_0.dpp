@@ -1,4 +1,4 @@
-//sum without type annotations
+//sum unwrapping
 
 typedef Test = union Int!inf | Unit!inf
 

@@ -1,9 +1,9 @@
-//sum without type annotations
+//sum creation
 
-typedef Test = union Int!1 | Unit!1
+typedef Test = union Int!inf | Unit!inf
 
-func testSum_1(x: Int!1) -> Test!1 {
+func testSum_1(x: Int!inf) -> Test!1 {
 	let test = Test.inl(x)
-	assertTypeEqual(x, Int!0)
+	assertTypeEqual(x, Int!inf)
 	return test
 }
