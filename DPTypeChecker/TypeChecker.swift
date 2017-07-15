@@ -473,6 +473,16 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
             let returnType = Type.tType(functionType, 1)
             return (returnType, delta)
         }
+    case let .eNegative(e1):
+        let (type, delta) = try inferType(e1)
+        let allowedCoreTypes: [CoreType] = [
+            .cTBase(.int),
+            .cTBase(.float)
+        ]
+        if allowedCoreTypes.contains(type.coreType) {
+            return (type, delta)
+        }
+        throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type])
     case let .eTimes(e1, e2):
         return try handleMultiplication(e1, e2, originalExpression: exp)
     case let .ePlus(e1, e2):
@@ -646,9 +656,14 @@ private func constantValueFromExpression(_ exp: Exp) -> Double? {
         return value
     case let .eInt(value):
         return Double(value)
+    case let .eNegative(e):
+        if let value = constantValueFromExpression(e) {
+            return -value
+        }
     default:
-        return nil
+        break
     }
+    return nil
 }
 
 private func checkAssertion(_ assertion: Assertion) throws {
@@ -730,7 +745,7 @@ extension TypeCheckerError: CustomStringConvertible {
         case let .noOperatorOverloadFound(exp: exp, types: types):
             return "no operator overload found that matches found types" + "\n" +
             "expression: " + exp.show() + "\n" +
-                "types: " + types.map { $0.description }.joined(separator: ", ")
+            "types: " + types.map { $0.description }.joined(separator: ", ")
         case let .arithmeticError(message: message):
             return message
         case let .assertionFailed(message):

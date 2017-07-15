@@ -32,17 +32,18 @@ ESum.    Exp15 ::= Ident "." Case "(" Exp ")" ;
 
 EApp.    Exp15 ::= Id "(" [Exp] ")" ;
 
-ETimes.   Exp12 ::= Exp12 "*"  Exp13 ;
-EPlus.    Exp11 ::= Exp11 "+"  Exp12 ;
-EMinus.   Exp11 ::= Exp11 "-"  Exp12 ;
+ENegative. Exp14 ::= "-" Exp13 ;
+ETimes.  Exp12 ::= Exp12 "*"  Exp13 ;
+EPlus.   Exp11 ::= Exp11 "+"  Exp12 ;
+EMinus.  Exp11 ::= Exp11 "-"  Exp12 ;
 
-ELt.      Exp9  ::= Exp9  "<"  Exp10 ;
-EGt.      Exp9  ::= Exp9  ">"  Exp10 ;
-ELtEq.    Exp9  ::= Exp9  "<=" Exp10 ;
-EGtEq.    Exp9  ::= Exp9  ">=" Exp10 ;
+ELt.     Exp9  ::= Exp9  "<"  Exp10 ;
+EGt.     Exp9  ::= Exp9  ">"  Exp10 ;
+ELtEq.   Exp9  ::= Exp9  "<=" Exp10 ;
+EGtEq.   Exp9  ::= Exp9  ">=" Exp10 ;
 
-EEq.      Exp8  ::= Exp8  "==" Exp9 ;
-ENeq.     Exp8  ::= Exp8  "!=" Exp9 ;
+EEq.     Exp8  ::= Exp8  "==" Exp9 ;
+ENeq.    Exp8  ::= Exp8  "!=" Exp9 ;
 
 internal ETyped. Exp ::= "(" Exp ":" Type ")" ;
 
