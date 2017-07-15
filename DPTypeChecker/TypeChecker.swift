@@ -475,6 +475,18 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
         return try handleEPlusOrEMinus(e1, e2, originalExpression: exp)
     case let .eMinus(e1, e2):
         return try handleEPlusOrEMinus(e1, e2, originalExpression: exp)
+    case let .eLt(e1, e2):
+        return try handleComparison(e1, e2, originalExpression: exp)
+    case let .eGt(e1, e2):
+        return try handleComparison(e1, e2, originalExpression: exp)
+    case let .eLtEq(e1, e2):
+        return try handleComparison(e1, e2, originalExpression: exp)
+    case let .eGtEq(e1, e2):
+        return try handleComparison(e1, e2, originalExpression: exp)
+    case let .eEq(e1, e2):
+        return try handleComparison(e1, e2, originalExpression: exp)
+    case let .eNeq(e1, e2):
+        return try handleComparison(e1, e2, originalExpression: exp)
     case let .eTyped(exp, type):
         //TODO: for now this is accepted to get types where inferencing does not work yet but should be removed as soon as possible
         do {
@@ -527,16 +539,46 @@ private func handleAddNoise(_ exps: [Exp]) throws -> Type {
 private func handleEPlusOrEMinus(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp) throws -> (Type, Environment.Delta) {
     let (type1, delta1) = try inferType(e1)
     let (type2, delta2) = try inferType(e2)
-    let allowedTypes: [Type] = [
-        .tType(.cTBase(.int), 1),
-        .tType(.cTBase(.float), 1)
-    ]
-    for allowedType in allowedTypes {
-        if allowedType.coreType == type1.coreType && allowedType.coreType == type2.coreType {
+    let allowedCoreTypes: [CoreType] = [
+        .cTBase(.int),
+        .cTBase(.float)
+    ] //replication count is always 1
+    for allowedCoreType in allowedCoreTypes {
+        if allowedCoreType == type1.coreType && allowedCoreType == type2.coreType {
             //instead of subtyping to replication count 1, rather subtype only so far that type1 and type2 match
             let lowerReplicationCount = min(type1.replicationCount, type2.replicationCount)
-            let resultType = Type.tType(allowedType.coreType, lowerReplicationCount)
+            let resultType = Type.tType(allowedCoreType, lowerReplicationCount)
             return (resultType, delta1.merge(with:delta2))
+        }
+    }
+    throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
+}
+
+private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp) throws -> (Type, Environment.Delta) {
+    var (type1, delta1) = try inferType(e1)
+    var (type2, delta2) = try inferType(e2)
+    var allowedCoreTypes: [CoreType] = [
+        .cTBase(.int),
+        .cTBase(.float),
+    ] //since comparison yields bool type which can magnify distance of input by infinity, input to comparison must have exponential type
+    
+    //booleans can not be ordered, thus only allow them for `==` and `!=`
+    if case .eEq = exp {
+        allowedCoreTypes.append(.cTTypedef(boolTypeIdent))
+    }
+    else if case .eNeq = exp {
+        allowedCoreTypes.append(.cTTypedef(boolTypeIdent))
+    }
+    
+    for allowedCoreType in allowedCoreTypes {
+        if allowedCoreType == type1.coreType && allowedCoreType == type2.coreType {
+            if type1.replicationCount != .infinity {
+                delta1.scale(by: .infinity)
+            }
+            if type2.replicationCount != .infinity {
+                delta2.scale(by: .infinity)
+            }
+            return (.tTypeExponential(.cTTypedef(boolTypeIdent)), delta1.merge(with:delta2))
         }
     }
     throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
