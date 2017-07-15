@@ -34,7 +34,7 @@ extension Type {
         }
         if case let .cTTypedef(id) = coreType {
             do {
-                return try environment.lookupType(id).coreType
+                return try environment.lookupCoreType(id)
             }
             catch {}
         }
@@ -140,8 +140,8 @@ extension CoreType {
             return argTypes.reduce(false) { $0 && $1.isOPPType} && returnType.isOPPType
         case let .cTTypedef(id):
             do {
-                let type = try environment.lookupType(id)
-                return type.isOPPType
+                let coreType = try environment.lookupCoreType(id)
+                return coreType.isOPPType
             }
             catch {
                 //computed getters cannot throw, thus we must return a default value
@@ -170,8 +170,19 @@ extension CoreType: Equatable {
             return true
         case (let .cTFunction(a1, r1), let cTFunction(a2, r2)):
             return r1 == r2 && a1.count == a2.count && zip(a1, a2).reduce(true) { $0 && $1.0 == $1.1 }
+        case (let .cTTypedef(id), _):
+            do {
+                let coreType = try environment.lookupCoreType(id)
+                return coreType == rhs
+            }
+            catch {
+                //computed getters cannot throw, thus we must return a default value
+                return false
+            }
+        case (_, .cTTypedef):
+            //switch argument order to get handling of cTTypedef for first argument
+            return rhs == lhs
         default:
-            //no need to handle .cTTypedef explicit, since it is handled in `Type.coreType` getter
             return false
         }
     }
@@ -204,8 +215,8 @@ extension CoreType: CustomStringConvertible {
             return "((\(args)) -> \(returnType.internalDescription))"
         case let .cTTypedef(id):
             do {
-                let type = try environment.lookupType(id)
-                return type.coreType.description
+                let type = try environment.lookupCoreType(id)
+                return type.description
             }
             catch {
                 //computed getters cannot throw, thus we must return a default value

@@ -37,7 +37,7 @@ internal struct Environment {
     private enum GlobalElement {
         case addNoise
         case function(args: [Type], returnType: Type)
-        case typedef(type: Type)
+        case typedef(coreType: CoreType)
     }
     
     struct Delta {
@@ -74,7 +74,7 @@ internal struct Environment {
     private var globals: [String : GlobalElement] = [
         addNoiseId.value : .addNoise,
         //Bool = (Unit!inf + Unit!inf)!1
-        boolTypeIdent.value : .typedef(type: .tType(.cTSum(.tTypeExponential(.cTBase(.unit)), .tTypeExponential(.cTBase(.unit))), 1))
+        boolTypeIdent.value : .typedef(coreType: .cTSum(.tTypeExponential(.cTBase(.unit)), .tTypeExponential(.cTBase(.unit))))
     ]
     
     private mutating func addGlobal(_ global: GlobalElement, forId id: String) throws {
@@ -123,8 +123,8 @@ internal struct Environment {
     }
     
     mutating func addSumType(name id: Ident, types: (Type, Type)) throws {
-        let sumType = Type.tTypeExponential(.cTSum(types.0, types.1))
-        try addGlobal(.typedef(type: sumType), forId: id.value)
+        let sumType = CoreType.cTSum(types.0, types.1)
+        try addGlobal(.typedef(coreType: sumType), forId: id.value)
     }
     
     mutating func addToCurrentContext(_ id: Id, type: Type) throws {
@@ -152,11 +152,11 @@ internal struct Environment {
         return (args, returnType)
     }
     
-    func lookupType(_ id: Ident) throws -> Type {
-        guard let global = globals[id.value], case let .typedef(type) = global else {
+    func lookupCoreType(_ id: Ident) throws -> CoreType {
+        guard let global = globals[id.value], case let .typedef(coreType) = global else {
             throw TypeCheckerError.typeNotFound(id)
         }
-        return type
+        return coreType
     }
     
     func lookupUsageCount(_ id: Id) throws -> Double {
@@ -403,7 +403,7 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
     case .eTrue:
         fallthrough
     case .eFalse:
-        return (try environment.lookupType(boolTypeIdent), Environment.Delta())
+        return (.tType(try environment.lookupCoreType(boolTypeIdent), 1), Environment.Delta())
     case let .eId(id):
         let type = try environment.lookup(id)
         let returnType = Type.tType(type.coreType, 1)
@@ -417,7 +417,7 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
         let delta = delta1.merge(with: delta2)
         return (returnType, delta)
     case let .eSum(typeId, sumCase, exp):
-        let type = try environment.lookupType(typeId)
+        let type = Type.tType(try environment.lookupCoreType(typeId), 1)
         var (expType, delta) = try inferType(exp)
         let requiredType = try sumCase.unwrappedType(from: type, environment: environment)
         try makeType(expType, matchRequiredType: requiredType, withDelta: &delta, errorForFailure: .mismatchingTypesForSumType(exp: exp, actual: expType, expected: requiredType))
