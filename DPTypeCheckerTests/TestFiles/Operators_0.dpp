@@ -24,5 +24,10 @@ func testOperators_0() -> Unit!1 {
     assertTypeEqual(b, Float!0)
     assertTypeEqual(d, Float!1)
 
+    let e = -1
+    let f = -1.0
+    assertTypeEqual(e, Int!1)
+    assertTypeEqual(f, Float!1)
+
     return ()
 }
