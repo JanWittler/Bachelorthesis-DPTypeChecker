@@ -568,14 +568,19 @@ private func handleMultiplication(_ e1: Exp, _ e2: Exp, originalExpression exp: 
         throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
     }
     
+    let mulWithConst: ((Type, Environment.Delta, Double) -> (Type, Environment.Delta)) = {
+        var delta = $1
+        //take the absolute value to handle negative numbers correctly
+        //scaling to numbers less than 1 is forbidden thus assure that factor is at least 1
+        delta.scale(by: max(1, abs($2)))
+        return ($0, delta)
+    }
     //check if it is a multiplication with a constant value
     if delta1.isEmpty, let value = constantValueFromExpression(e1) {
-        delta2.scale(by: value)
-        return (type2, delta2)
+        return mulWithConst(type2, delta2, value)
     }
     else if delta2.isEmpty, let value = constantValueFromExpression(e2) {
-        delta1.scale(by: value)
-        return (type1, delta1)
+        return mulWithConst(type1, delta1, value)
     }
     else {
         //check if both types are exponential or can be scaled up to that
