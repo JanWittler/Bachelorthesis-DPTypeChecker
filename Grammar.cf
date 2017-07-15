@@ -32,6 +32,7 @@ ESum.    Exp15 ::= Ident "." Case "(" Exp ")" ;
 
 EApp.    Exp15 ::= Id "(" [Exp] ")" ;
 
+ETimes.   Exp12 ::= Exp12 "*"  Exp13 ;
 EPlus.    Exp11 ::= Exp11 "+"  Exp12 ;
 EMinus.   Exp11 ::= Exp11 "-"  Exp12 ;
 

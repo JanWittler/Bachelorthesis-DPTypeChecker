@@ -28,6 +28,7 @@ public enum TypeCheckerError: Error {
     case tooManyArgumentsToFunction(exp: Exp, actualCount: Int, expectedCount: Int)
     case mismatchingTypeForFunctionArgument(exp: Exp, index: Int, actual: Type, expected: Type)
     case noOperatorOverloadFound(exp: Exp, types: [Type])
+    case arithmeticError(message: String)
     case assertionFailed(String)
     case addNoiseFailed(message: String)
     case other(String)
@@ -472,6 +473,8 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
             let returnType = Type.tType(functionType, 1)
             return (returnType, delta)
         }
+    case let .eTimes(e1, e2):
+        return try handleMultiplication(e1, e2, originalExpression: exp)
     case let .ePlus(e1, e2):
         return try handleEPlusOrEMinus(e1, e2, originalExpression: exp)
     case let .eMinus(e1, e2):
@@ -544,15 +547,55 @@ private func handleEPlusOrEMinus(_ e1: Exp, _ e2: Exp, originalExpression exp: E
         .cTBase(.int),
         .cTBase(.float)
     ] //replication count is always 1
-    for allowedCoreType in allowedCoreTypes {
-        if allowedCoreType == type1.coreType && allowedCoreType == type2.coreType {
-            //instead of subtyping to replication count 1, rather subtype only so far that type1 and type2 match
-            let lowerReplicationCount = min(type1.replicationCount, type2.replicationCount)
-            let resultType = Type.tType(allowedCoreType, lowerReplicationCount)
-            return (resultType, delta1.merge(with:delta2))
-        }
+    if allowedCoreTypes.contains(type1.coreType) && type1.coreType == type2.coreType {
+        //instead of subtyping to replication count 1, rather subtype only so far that type1 and type2 match
+        let lowerReplicationCount = min(type1.replicationCount, type2.replicationCount)
+        let resultType = Type.tType(type1.coreType, lowerReplicationCount)
+        return (resultType, delta1.merge(with:delta2))
     }
     throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
+}
+
+private func handleMultiplication(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp) throws -> (Type, Environment.Delta) {
+    var (type1, delta1) = try inferType(e1)
+    var (type2, delta2) = try inferType(e2)
+    
+    let allowedCoreTypes: [CoreType] = [
+        .cTBase(.int),
+        .cTBase(.float)
+    ]
+    guard allowedCoreTypes.contains(type1.coreType) && type1.coreType == type2.coreType else {
+        throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
+    }
+    
+    //check if it is a multiplication with a constant value
+    if delta1.isEmpty, let value = constantValueFromExpression(e1) {
+        delta2.scale(by: value)
+        return (type2, delta2)
+    }
+    else if delta2.isEmpty, let value = constantValueFromExpression(e2) {
+        delta1.scale(by: value)
+        return (type1, delta1)
+    }
+    else {
+        //check if both types are exponential or can be scaled up to that
+        do {
+            var environmentCopy = environment
+            if type1.replicationCount < .infinity {
+                delta1.scale(by: .infinity)
+                try environmentCopy.applyDelta(delta1)
+            }
+            if type2.replicationCount < .infinity {
+                delta2.scale(by: .infinity)
+                try environmentCopy.applyDelta(delta2)
+            }
+            return (.tTypeExponential(type1.coreType), delta1.merge(with: delta2))
+        }
+        catch {
+            //catch scaling error to throw more descriptive arithmetic error instead
+            throw TypeCheckerError.arithmeticError(message: "multiplication must be performed with at least one constant or only exponential types." + "\n" + "expression: \(exp.show())")
+        }
+    }
 }
 
 private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp) throws -> (Type, Environment.Delta) {
@@ -571,18 +614,36 @@ private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp)
         allowedCoreTypes.append(.cTTypedef(boolTypeIdent))
     }
     
-    for allowedCoreType in allowedCoreTypes {
-        if allowedCoreType == type1.coreType && allowedCoreType == type2.coreType {
+    if allowedCoreTypes.contains(type1.coreType) && type1.coreType == type2.coreType {
+        do {
+            var environmentCopy = environment
             if type1.replicationCount != .infinity {
                 delta1.scale(by: .infinity)
+                try environmentCopy.applyDelta(delta1)
             }
             if type2.replicationCount != .infinity {
                 delta2.scale(by: .infinity)
+                try environmentCopy.applyDelta(delta2)
             }
             return (.tTypeExponential(.cTTypedef(boolTypeIdent)), delta1.merge(with:delta2))
         }
+        catch {
+            //catch scaling error to throw more descriptive arithmetic error instead
+            throw TypeCheckerError.arithmeticError(message: "input of comparison operators must both have an exponential type\nexpression: \(exp.show())")
+        }
     }
     throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
+}
+
+private func constantValueFromExpression(_ exp: Exp) -> Double? {
+    switch exp {
+    case let .eFloat(value):
+        return value
+    case let .eInt(value):
+        return Double(value)
+    default:
+        return nil
+    }
 }
 
 private func checkAssertion(_ assertion: Assertion) throws {
@@ -665,6 +726,8 @@ extension TypeCheckerError: CustomStringConvertible {
             return "no operator overload found that matches found types" + "\n" +
             "expression: " + exp.show() + "\n" +
                 "types: " + types.map { $0.description }.joined(separator: ", ")
+        case let .arithmeticError(message: message):
+            return message
         case let .assertionFailed(message):
             return message
         case let.addNoiseFailed(message: message):
