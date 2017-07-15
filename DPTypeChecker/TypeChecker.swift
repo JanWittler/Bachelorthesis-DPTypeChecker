@@ -41,6 +41,7 @@ internal struct Environment {
     }
     
     struct Delta {
+        var isEmpty: Bool { return changes.isEmpty }
         private(set) var changes: [Id : Double] = [:]
         
         mutating func updateUsageCount(for id: Id, delta: Double) {

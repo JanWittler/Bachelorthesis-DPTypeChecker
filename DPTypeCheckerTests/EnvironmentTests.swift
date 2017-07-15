@@ -9,6 +9,14 @@
 import XCTest
 
 class EnvironmentTests: XCTestCase {
+    func testDeltaEmpty() {
+        var delta = Environment.Delta()
+        XCTAssertEqual(delta.isEmpty, true)
+        
+        delta.updateUsageCount(for: Id("x"), delta: 1)
+        XCTAssertEqual(delta.isEmpty, false)
+    }
+    
     func testDeltaUsageCount() {
         var delta = Environment.Delta()
         var expectedResult: [Id : Double] = [:]
