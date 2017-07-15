@@ -26,6 +26,7 @@
 		2A42BE061F0FD4740039A4E9 /* Operators_0.dpp in Resources */ = {isa = PBXBuildFile; fileRef = 2A42BE051F0FD4740039A4E9 /* Operators_0.dpp */; };
 		2A6656E11F0C14CB00E7D89C /* EnvironmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A6656E01F0C14CB00E7D89C /* EnvironmentTests.swift */; };
 		2A74E7F41EE9D71800C4D566 /* AbSyn+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */; };
+		2A9239541F1A2DD7006F7AB7 /* Operators_1.dpp in Resources */ = {isa = PBXBuildFile; fileRef = 2A9239531F1A2DD7006F7AB7 /* Operators_1.dpp */; };
 		2A9BA9641EE8029A00BE2F00 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA9631EE8029A00BE2F00 /* main.swift */; };
 		2A9BA96C1EE802AA00BE2F00 /* AbstractSyntax.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */; };
 		2A9BA9771EE802D500BE2F00 /* CGrammar.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A9BA9751EE802D500BE2F00 /* CGrammar.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -68,6 +69,7 @@
 		2A42BE051F0FD4740039A4E9 /* Operators_0.dpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Operators_0.dpp; sourceTree = "<group>"; };
 		2A6656E01F0C14CB00E7D89C /* EnvironmentTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EnvironmentTests.swift; sourceTree = "<group>"; };
 		2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "AbSyn+Extensions.swift"; sourceTree = "<group>"; };
+		2A9239531F1A2DD7006F7AB7 /* Operators_1.dpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Operators_1.dpp; sourceTree = "<group>"; };
 		2A9BA9601EE8029A00BE2F00 /* DPTypeChecker */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = DPTypeChecker; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A9BA9631EE8029A00BE2F00 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AbstractSyntax.swift; sourceTree = "<group>"; };
@@ -135,6 +137,7 @@
 				2A42BE031F0F96DC0039A4E9 /* FuncApply_1.dpp */,
 				2A1A4F411EF3F2EE00126705 /* AddNoise_0.dpp */,
 				2A42BE051F0FD4740039A4E9 /* Operators_0.dpp */,
+				2A9239531F1A2DD7006F7AB7 /* Operators_1.dpp */,
 			);
 			path = TestFiles;
 			sourceTree = "<group>";
@@ -312,6 +315,7 @@
 				2A3748A01EF132550095C2A1 /* Split_0.dpp in Resources */,
 				2A42BE061F0FD4740039A4E9 /* Operators_0.dpp in Resources */,
 				2A1A4F401EF3EAB500126705 /* FuncApply_0.dpp in Resources */,
+				2A9239541F1A2DD7006F7AB7 /* Operators_1.dpp in Resources */,
 				2A142E811EF00A9000FA8787 /* Pair_0.dpp in Resources */,
 				2A3EBBEE1F0B915A007DBCDD /* Sum_0.dpp in Resources */,
 				2A3EBBF01F0B9A5D007DBCDD /* Sum_1.dpp in Resources */,

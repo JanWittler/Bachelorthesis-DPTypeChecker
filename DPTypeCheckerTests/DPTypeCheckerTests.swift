@@ -40,7 +40,7 @@ class DPTypeCheckerTests: XCTestCase {
     }
     
     func testOperators() {
-        let files = ["Operators_0.dpp"]
+        let files = ["Operators_0.dpp", "Operators_1.dpp"]
         testFiles(files)
     }
     

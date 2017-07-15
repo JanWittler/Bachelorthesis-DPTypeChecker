@@ -1,0 +1,19 @@
+//logic operators
+func testOperators_1() -> Bool!2 {
+    let a: Bool!inf = true
+    let b: Bool!inf = false
+    let c = a == b
+    let d = a != b
+
+    let e: Int!inf = 10
+    let f: Int!inf = 5
+    let g = e < f
+    let h = e > 7
+
+    let i: Float!inf = 5.4
+    let j: Float!inf = 2.7
+    let k = i <= j
+    let l = j >= 10.0
+
+    return 4 < 5
+}
