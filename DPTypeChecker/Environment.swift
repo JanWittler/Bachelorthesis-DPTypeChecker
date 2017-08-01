@@ -36,7 +36,7 @@ internal struct Environment {
          Updates the usage count for the given id by the given delta. If there was no entry for the id, the new usage count is equal to `delta`, otherwise the new usage count is the sum of the old usage count and `delta`.
          - parameters:
          - id: The id to update the usage count for.
-         - delta: The change of the usage count. This value must be greater than 0.
+         - delta: The change of the usage count. This value must be greater than `0`.
          */
         mutating func updateUsageCount(for id: Id, delta: Double) {
             precondition(delta > 0, "the given delta must be greater than zero")
@@ -47,7 +47,7 @@ internal struct Environment {
         /**
          Scales all usage counts of the current delta by the given factor. The resulting usage counts for each id are the previous usage counts times the given factor.
          - parameters:
-         - factor: The factor to scale by. This value must be greater or equal than 1.
+         - factor: The factor to scale by. This value must be greater or equal than `1`.
          */
         mutating func scale(by factor: Double) {
             precondition(factor >= 1, "scaling to lower count invalid")
