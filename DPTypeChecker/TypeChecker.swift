@@ -49,7 +49,6 @@ internal struct Environment {
             precondition(delta > 0, "the given delta must be greater than zero")
             let value = changes[id] ?? 0
             changes[id] = value + delta
-            
         }
         
         mutating func scale(by factor: Double) {
@@ -360,7 +359,7 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         environment.pushContext()
         
         var (condType, envDelta) = try inferType(exp)
-        var unwrappedType = try sumCase.unwrappedType(from: condType, environment: environment)
+        var unwrappedType = try sumCase.unwrappedType(from: condType)
         try checkIfIdMaybeTyped(idMaybeTyped, matchesType: unwrappedType, inStm: stm)
         if let type = idMaybeTyped.type {
             try makeType(condType, matchRequiredType: type, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: condType, expected: type))
@@ -421,7 +420,7 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
     case let .eSum(typeId, sumCase, exp):
         let type = Type.tType(try environment.lookupCoreType(typeId), 1)
         var (expType, delta) = try inferType(exp)
-        let requiredType = try sumCase.unwrappedType(from: type, environment: environment)
+        let requiredType = try sumCase.unwrappedType(from: type)
         try makeType(expType, matchRequiredType: requiredType, withDelta: &delta, errorForFailure: .mismatchingTypesForSumType(exp: exp, actual: expType, expected: requiredType))
         return (.tType(type.coreType, 1), delta)
     case let .eApp(id, exps):

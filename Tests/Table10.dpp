@@ -1,0 +1,38 @@
+func P(d: (Set_Double!1,Set_Double!1)!1) -> ((Double!inf -> Double!inf)!inf, ((Double!inf -> Double!inf)!inf, (Double!inf -> (Double!inf -> Double!inf)!inf)!inf)) {
+	let (D_A, D_B):(Set_Double!1, Set_Double!1) = d
+	let (r_a, w_a):((Unit!inf -> Optional(Set_Double!1)!1)!inf, (Optional(Set_Double!1)!1 -> Unit!inf)!inf = ref(Set_Double)
+	let (r_b, w_b):((Unit!inf -> Optional(Set_Double!1)!1)!inf, (Optional(Set_Double!1)!1 -> Unit!inf)!inf = ref(Set_Double)
+	let store_a: Unit!inf = w_a(Some(D_A))
+	let store_b: Unit!inf = w_b(Some(D_B))
+	let k_A: SKey(Double)!inf = mkSKey()
+	ket k_B: SKey(Double)!inf = mkSKey()
+	return (S(r_a), S(r_b), C)
+}
+
+func S(accessor: (Unit!inf -> Optional(Set_Double!1)!1)!inf, key: SKey(Double)!inf) -> (Double!inf -> Double!inf)!inf {
+	if let d = accessor() {
+		let d2 = setfilter(over40, d)
+		let query = size(d2)
+		return senc(key, query)
+	}
+	else {
+		`error`
+	}
+}
+
+func C(key_A: SKey(Double)!inf, key_B: SKey(Double)!inf, x_A: Double!inf, x_B: Double!inf) -> Double!inf {
+	let q_A = sdec(key_A, x_A)
+	let q_B = sdec(key_B, x_B)
+	if let q_A2 = q_A {
+		if let q_B2 = q_B {
+			let query = add(q_A2, q_B2)
+			return add_noise(query)
+		}
+		else {
+			`error`
+		}
+	}
+	else {
+		`error`
+	}
+}

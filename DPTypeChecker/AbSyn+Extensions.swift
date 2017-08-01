@@ -79,7 +79,14 @@ extension Arg {
 }
 
 extension Case {
-    func unwrappedType(from type: Type, environment: Environment) throws -> Type {
+    /**
+     Returns the unwrapped type from the given type based on the case value.
+     - parameters:
+       - type: The type to unwrap. The core type of this type must be a sum type, otherwise an error is thrown.
+     - returns: The unwrapped type based on the case value.
+     - throws: Throws an instance of `TypeCheckerError.caseApplicationFailed` if the given type cannot be unwrapped because it's core type is not a sum type.
+     */
+    func unwrappedType(from type: Type) throws -> Type {
         //no need to handle .cTTypedef explicit, since it is handled in `Type.coreType` getter
         guard case let .cTSum(lType, rType) = type.coreType else {
             throw TypeCheckerError.caseApplicationFailed(case: self, actual: type)
@@ -94,9 +101,15 @@ extension Case {
     }
 }
 
-//MARK: subtyping
+//MARK:- subtyping
 
 extension Type {
+    /**
+     Checks whether `self` is a subtype of the given type. A type is a subtype of another if the replication count is less or equal to the other replication count, the core types match and their respective types are subtypes of their matching counterpart too. A type is always subtype of itself.
+     - parameters:
+       - other: The supertype to check for.
+     - returns: `true` if `self` is a subtype of `other`, otherwise `false`.
+     */
     func isSubtype(of other: Type) -> Bool {
         //if the own count is larger than the compared count, we can alwas return `false`, no matter of the internal types
         guard replicationCount <= other.replicationCount else {
@@ -119,15 +132,21 @@ extension Type {
     }
 }
 
-//MARK: OPP type
+//MARK:- opponent type
 
 extension Type {
+    /**
+     Indicates if the type instance is an opponent type. An opponent type is a type where all replication counts have value infinity.
+     */
     var isOPPType: Bool {
         return replicationCount == Double.infinity && coreType.isOPPType
     }
 }
 
-extension CoreType {
+private extension CoreType {
+    /**
+     Indicates if the core type instance is an opponent type, assuming its belonging type has a replication count of infinity. All base types are opponent types by design, composed core types are opponent types if their contained types are opponent types.
+    */
     var isOPPType: Bool {
         switch self {
         case .cTBase(_):
@@ -137,7 +156,7 @@ extension CoreType {
         case let .cTSum(lType, rType):
             return lType.isOPPType && rType.isOPPType
         case let .cTFunction(argTypes, returnType):
-            return argTypes.reduce(false) { $0 && $1.isOPPType} && returnType.isOPPType
+            return argTypes.reduce(true) { $0 && $1.isOPPType } && returnType.isOPPType
         case let .cTTypedef(id):
             do {
                 let coreType = try environment.lookupCoreType(id)
@@ -151,7 +170,7 @@ extension CoreType {
     }
 }
 
-//MARK: equatable extensions
+//MARK:- type comparison
 
 extension Type: Equatable {
     public static func ==(lhs: Type, rhs: Type) -> Bool {
@@ -188,7 +207,7 @@ extension CoreType: Equatable {
     }
 }
 
-//MARK: Type printing
+//MARK:- type printing
 
 extension Type: CustomStringConvertible {
     public var description: String {
