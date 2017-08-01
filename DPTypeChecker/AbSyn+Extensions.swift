@@ -84,7 +84,7 @@ extension Case {
      - parameters:
        - type: The type to unwrap. The core type of this type must be a sum type, otherwise an error is thrown.
      - returns: The unwrapped type based on the case value.
-     - throws: Throws an instance of `TypeCheckerError.caseApplicationFailed` if the given type cannot be unwrapped because it's core type is not a sum type.
+     - throws: Throws a `TypeCheckerError.caseApplicationFailed` error if the given type cannot be unwrapped because its core type is not a sum type.
      */
     func unwrappedType(from type: Type) throws -> Type {
         //no need to handle .cTTypedef explicit, since it is handled in `Type.coreType` getter
