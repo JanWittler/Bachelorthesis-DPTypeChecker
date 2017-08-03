@@ -119,9 +119,9 @@ extension Type {
         case (let .cTBase(bType1), let .cTBase(bType2)):
             return bType1 == bType2
         case (let .cTMulPair(pair1), let .cTMulPair(pair2)):
-            return pair1.0.isSubtype(of:pair2.0) && pair1.1.isSubtype(of:pair2.1)
+            return pair1.0.isSubtype(of: pair2.0) && pair1.1.isSubtype(of: pair2.1)
         case (let .cTSum(sum1), let .cTSum(sum2)):
-            return sum1.0.isSubtype(of: sum2.0) && sum2.0.isSubtype(of: sum2.0)
+            return sum1.0.isSubtype(of: sum2.0) && sum1.1.isSubtype(of: sum2.1)
         case (let .cTFunction(a1, r1), let .cTFunction(a2, r2)):
             //arguments have inversed subtype requirements
             return r1.isSubtype(of: r2) && a1.count == a2.count && zip(a1, a2).reduce(true) { $0 && $1.1.isSubtype(of: $1.0) }
