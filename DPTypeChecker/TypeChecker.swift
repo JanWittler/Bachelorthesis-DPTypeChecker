@@ -182,6 +182,26 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
         let requiredType = try sumCase.unwrappedType(from: type)
         try makeType(&expType, matchRequiredType: requiredType, withDelta: &delta, errorForFailure: .mismatchingTypesForSumType(exp: exp, actual: expType, expected: requiredType))
         return (.tType(type.coreType, 1), delta)
+    case let .eList(exps):
+        let typesAndDeltas = try exps.map { try inferType($0) }
+        let types = typesAndDeltas.map { $0.0 }
+        let delta = typesAndDeltas.reduce(Environment.Delta()) { $0.merge(with: $1.1) }
+        if var elementType = types.first {
+            try types.forEach {
+                //subtype all elements to the type with the least replication count
+                if $0.isSubtype(of: elementType) {
+                    elementType = $0
+                }
+                //TODO: support for list with mix of generic element type and known type -> type generic elements to be of the known type
+                else if !elementType.isSubtype(of: $0) {
+                   throw TypeCheckerError.listWithHeterogenousElementsNotSupported(exp: exp, types: types)
+                }
+            }
+            return (.tType(.cTList(elementType), 1), delta)
+        }
+        else {
+            return (.tType(.cTList(.tTypeUnknown), 1), Environment.Delta())
+        }
     case let .eApp(id, exps):
         guard id != addNoiseId else {
             return (try handleAddNoise(exps), Environment.Delta())

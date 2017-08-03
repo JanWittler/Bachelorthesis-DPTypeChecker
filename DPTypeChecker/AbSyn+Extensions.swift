@@ -126,6 +126,8 @@ extension Type {
             return pair1.0.isSubtype(of: pair2.0) && pair1.1.isSubtype(of: pair2.1)
         case (let .cTSum(sum1), let .cTSum(sum2)):
             return sum1.0.isSubtype(of: sum2.0) && sum1.1.isSubtype(of: sum2.1)
+        case (let .cTList(elem1), let .cTList(elem2)):
+            return elem1.isSubtype(of: elem2)
         case (let .cTFunction(a1, r1), let .cTFunction(a2, r2)):
             //arguments have inversed subtype requirements
             return r1.isSubtype(of: r2) && a1.count == a2.count && zip(a1, a2).reduce(true) { $0 && $1.1.isSubtype(of: $1.0) }
@@ -185,6 +187,8 @@ extension Type {
                 return internalCanBeConverted(pair1.0, pair2.0, false) && internalCanBeConverted(pair1.1, pair2.1, false)
             case (let .cTSum(sum1), let .cTSum(sum2)):
                 return internalCanBeConverted(sum1.0, sum2.0, false) && internalCanBeConverted(sum1.1, sum2.1, false)
+            case (let .cTList(elem1), let .cTList(elem2)):
+                return internalCanBeConverted(elem1, elem2, false)
             //case .cTFunction ommitted since functions cannot have unknown types
             //case .cTTypedef ommitted since it is handled implicit by `Type.coreType` accessor
             //unknown core type already handled by unknown type
@@ -220,6 +224,8 @@ private extension CoreType {
             return type1.isOPPType && type2.isOPPType
         case let .cTSum(lType, rType):
             return lType.isOPPType && rType.isOPPType
+        case let .cTList(type):
+            return type.isOPPType
         case let .cTFunction(argTypes, returnType):
             return argTypes.reduce(true) { $0 && $1.isOPPType } && returnType.isOPPType
         case let .cTTypedef(id):
@@ -253,6 +259,8 @@ extension CoreType: Equatable {
         case (let .cTMulPair(pair1), let .cTMulPair(pair2)) where pair1 == pair2:
             return true
         case (let .cTSum(sum1), let .cTSum(sum2)) where sum1 == sum2:
+            return true
+        case (let .cTList(elem1), let .cTList(elem2)) where elem1 == elem2:
             return true
         case (let .cTFunction(a1, r1), let cTFunction(a2, r2)):
             return r1 == r2 && a1.count == a2.count && zip(a1, a2).reduce(true) { $0 && $1.0 == $1.1 }
@@ -301,6 +309,8 @@ extension CoreType: CustomStringConvertible {
             return "(\(t1.internalDescription) ⊗ \(t2.internalDescription))"
         case let .cTSum(lType, rType):
             return "(\(lType.internalDescription) + \(rType.internalDescription))"
+        case let .cTList(type):
+            return "[\(type.internalDescription)]"
         case let .cTFunction(argTypes, returnType):
             let args = argTypes.map { $0.internalDescription }.joined(separator: ", ")
             return "((\(args)) -> \(returnType.internalDescription))"

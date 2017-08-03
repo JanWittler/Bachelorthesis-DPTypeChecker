@@ -1,0 +1,25 @@
+//lists
+
+func helper(x: Bool!1) -> [Int!1]!1 {
+    if (case y = inl x) {
+        return []
+    }
+    else {
+        return [1, 2, 3]
+    }
+}
+
+func testList_0() -> Unit!1 {
+    let x = helper(true)
+    let y = helper(false)
+    assertTypeEqual(x, [Int!1]!1)
+    assertTypeEqual(y, [Int!1]!1)
+
+    let listInt: [Int!1]!5 = []
+    let listInt2 = [10, 20, 30]
+    let listlist = [[1,2,3], [4,5,6]]
+    assertTypeEqual(listInt, [Int!1]!5)
+    assertTypeEqual(listInt2, [Int!1]!1)
+    assertTypeEqual(listlist, [[Int!1]!1]!1)
+    return ()
+}

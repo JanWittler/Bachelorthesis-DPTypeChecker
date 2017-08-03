@@ -29,6 +29,7 @@ EFalse.  Exp15 ::= "false" ;
 EId.     Exp15 ::= Id ;
 EPair.   Exp15 ::= "(" Exp "," Exp ")" ;
 ESum.    Exp15 ::= Ident "." Case "(" Exp ")" ;
+EList.   Exp15 ::= "[" [Exp] "]" ;
 
 EApp.    Exp15 ::= Id "(" [Exp] ")" ;
 
@@ -59,6 +60,7 @@ TTypeConvenienceInt. Type ::= CoreType "!" Integer ;
 CTBase.    CoreType ::= BaseType ;
 CTMulPair. CoreType ::= "(" Type "," Type ")" ;
 CTSum.     CoreType ::= "(" Type "+" Type ")" ;
+CTList.    CoreType ::= "[" Type "]" ;
 CTTypedef. CoreType ::= Ident ;
 CTFunction.CoreType ::= "(" "(" [Type] ")" "->" Type ")" ;
 

@@ -23,6 +23,7 @@ public enum TypeCheckerError: Error {
     case splitFailed(stm: Stm, actual: Type)
     case caseApplicationFailed(case: Case, actual: Type)
     case mismatchingTypesForSumType(exp: Exp, actual: Type, expected: Type)
+    case listWithHeterogenousElementsNotSupported(exp: Exp, types: [Type])
     case tooManyArgumentsToFunction(exp: Exp, actualCount: Int, expectedCount: Int)
     case mismatchingTypeForFunctionArgument(exp: Exp, index: Int, actual: Type, expected: Type)
     case noOperatorOverloadFound(exp: Exp, types: [Type])
@@ -77,6 +78,10 @@ extension TypeCheckerError: CustomStringConvertible {
                 "expression: " + exp.show() + "\n" +
                 "expected: \(expected)\n" +
             "actual: \(actual)"
+        case let .listWithHeterogenousElementsNotSupported(exp: exp, types: types):
+            return "lists with heterogenenous elements are not supported" + "\n" +
+            "expression: " + exp.show() + "\n" +
+            "types: " + types.map { $0.description }.joined(separator: ", ")
         case let .tooManyArgumentsToFunction(exp: exp, actualCount: actual, expectedCount: expected):
             return "too many arguments to function" + "\n" +
                 "expression: " + exp.show() + "\n" +
