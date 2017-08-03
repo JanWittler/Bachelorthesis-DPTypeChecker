@@ -19,6 +19,8 @@ extension Type {
             return Double(rCount)
         case .tTypeExponential(_):
             return Double.infinity
+        case .tTypeUnknown:
+            return 0
         }
     }
     
@@ -31,6 +33,8 @@ extension Type {
             coreType = cType
         case let .tTypeExponential(cType):
             coreType = cType
+        case .tTypeUnknown:
+            return .cTUnknown
         }
         if case let .cTTypedef(id) = coreType {
             do {
@@ -125,10 +129,71 @@ extension Type {
         case (let .cTFunction(a1, r1), let .cTFunction(a2, r2)):
             //arguments have inversed subtype requirements
             return r1.isSubtype(of: r2) && a1.count == a2.count && zip(a1, a2).reduce(true) { $0 && $1.1.isSubtype(of: $1.0) }
+        case (.cTUnknown, .cTUnknown):
+            return true
+        //case .cTTypedef ommitted since it is handled implicit by `Type.coreType` accessor
         default:
-            //no need to handle .cTTypedef explicit, since it is handled in `Type.coreType` getter
             return false
         }
+    }
+    
+    /**
+     Returns the scaling factor that is required to match the current type with the given type. The returned factor is never less than `1`. If the two types do not match, `nil` is returned.
+     - Note: Unknown types contained in `self` are treated as if they would match their counterpart in `requiredType`. Thus after applying the scaling, `self` should not be used furthermore but rather the `requiredType` variable.
+     - parameters:
+       - requiredType: The type that `self` should be scaled up to match.
+     - returns: Returns the scaling factor to apply to match `self` with `requiredType`. The minimal returned value is `1`. Returns `nil` if the two types do not match.
+     */
+    func scalingFactorToConvertToType(_ requiredType: Type) -> Double? {
+        if requiredType.isSubtype(of: self) {
+            return 1
+        }
+        else if coreType == requiredType.coreType {
+            return max(1, requiredType.replicationCount / replicationCount)
+        }
+        //check if `self` contains an unknown type which can be converted to match `requiredType`
+        else if canBeConverted(to: requiredType) {
+            return Type.tType(requiredType.coreType, replicationCount).scalingFactorToConvertToType(requiredType)
+        }
+        return nil
+    }
+    
+    /**
+     Checks whether the current type can be converted to the given type using scaling and by replacing unknown types with their corresponding types in the required type.
+     - parameters:
+       - requiredType: The type to try to convert to.
+     - returns: Returns `true` if the current type can be converted to the given type, otherwise `false`.
+     */
+    private func canBeConverted(to requiredType: Type) -> Bool {
+        //use recursion on an internal closure to be able to do not check replication count only in first recursion. This is allowed because topmost replication count can be adjusted using scaling
+        var internalCanBeConverted: ((Type, Type, Bool) -> Bool)!
+        internalCanBeConverted = {
+            //if own type is unknown it can become any type
+            if $0 == .tTypeUnknown {
+                return true
+            }
+            
+            //either first stage where replication count can be ignored or `type`'s replication count is greater than `requiredType`'s replication count thus it can be subtyped to `requiredType`
+            guard $2 || $0.replicationCount >= $1.replicationCount else {
+                return false
+            }
+            
+            switch ($0.coreType, $1.coreType) {
+            case (let .cTBase(bType1), let .cTBase(bType2)):
+                return bType1 == bType2
+            case (let .cTMulPair(pair1), let .cTMulPair(pair2)):
+                return internalCanBeConverted(pair1.0, pair2.0, false) && internalCanBeConverted(pair1.1, pair2.1, false)
+            case (let .cTSum(sum1), let .cTSum(sum2)):
+                return internalCanBeConverted(sum1.0, sum2.0, false) && internalCanBeConverted(sum1.1, sum2.1, false)
+            //case .cTFunction ommitted since functions cannot have unknown types
+            //case .cTTypedef ommitted since it is handled implicit by `Type.coreType` accessor
+            //unknown core type already handled by unknown type
+            default:
+                return $1.isSubtype(of: $0)
+            }
+        }
+
+        return internalCanBeConverted(self, requiredType, true)
     }
 }
 
@@ -166,6 +231,8 @@ private extension CoreType {
                 //computed getters cannot throw, thus we must return a default value
                 return false
             }
+        case .cTUnknown:
+            return false
         }
     }
 }
@@ -189,18 +256,23 @@ extension CoreType: Equatable {
             return true
         case (let .cTFunction(a1, r1), let cTFunction(a2, r2)):
             return r1 == r2 && a1.count == a2.count && zip(a1, a2).reduce(true) { $0 && $1.0 == $1.1 }
-        case (let .cTTypedef(id), _):
+        case (let .cTTypedef(id1), _):
             do {
-                let coreType = try environment.lookupCoreType(id)
+                let coreType = try environment.lookupCoreType(id1)
                 return coreType == rhs
             }
             catch {
                 //computed getters cannot throw, thus we must return a default value
+                if case let .cTTypedef(id2) = rhs {
+                    return id1 == id2
+                }
                 return false
             }
         case (_, .cTTypedef):
             //switch argument order to get handling of cTTypedef for first argument
             return rhs == lhs
+        case (.cTUnknown, .cTUnknown):
+            return true
         default:
             return false
         }
@@ -241,6 +313,8 @@ extension CoreType: CustomStringConvertible {
                 //computed getters cannot throw, thus we must return a default value
                 return "\(id.value)"
             }
+        case .cTUnknown:
+            return "Unknown"
         }
     }
 }

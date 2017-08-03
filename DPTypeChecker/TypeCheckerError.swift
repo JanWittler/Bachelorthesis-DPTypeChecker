@@ -15,6 +15,7 @@ public enum TypeCheckerError: Error {
     case typeNotFound(Ident)
     case variableAlreadyExists(Id)
     case variableNotFound(Id)
+    case accessToVariableWithUnknownType(Id)
     case invalidVariableAccess(Id)
     case assignmentFailed(stm: Stm, actual: Type, expected: Type)
     case missingReturn(function: Id)
@@ -48,6 +49,9 @@ extension TypeCheckerError: CustomStringConvertible {
             return "variable `\(id.value)` already exists in context"
         case let .variableNotFound(id):
             return "variable `\(id.value)` not found in context"
+        case let .accessToVariableWithUnknownType(id):
+            return "tried to access an variable with unknown type which is invalid. Unknown types occur when generic elements are created with not enough information, e.g. an empty list without type annotation" + "\n" +
+            "variable id: \(id)"
         case let .invalidVariableAccess(id):
             return "access to variable `\(id.value)` led to replication count less than zero"
         case let .assignmentFailed(stm, actual, expected):

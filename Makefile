@@ -11,7 +11,7 @@ grammar: $(grammar)
 	cd CGrammar && make
 
 mapping:
-	make run -f $(cToSwiftFolder)Makefile grammar=$(grammar) outputPath="DPTypeChecker" moduleName="CGrammar"
+	make run -f $(cToSwiftFolder)Makefile grammar=$(grammar) outputPath="DPTypeChecker" moduleName="CGrammar" additionalEnumCases="-extra-case 'Type' 'tTypeUnknown' -extra-case 'CoreType' 'cTUnknown'"
 
 CGrammar-clean:
 	cd CGrammar && rm -f *.o *.bak *.l *.y Test* Makefile Skeleton.* Printer.*

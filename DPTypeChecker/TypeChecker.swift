@@ -81,8 +81,8 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
     switch stm {
     case let .sInit(idMaybeTyped, exp):
         var (expType, envDelta) = try inferType(exp)
-        if let type = idMaybeTyped.type {
-            try makeType(&expType, matchRequiredType: type, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: expType, expected: type))
+        if let requiredType = idMaybeTyped.type {
+            try makeType(&expType, matchRequiredType: requiredType, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: expType, expected: requiredType))
         }
         try environment.applyDelta(envDelta)
         try environment.addToCurrentContext(idMaybeTyped.id, type: expType)
@@ -93,19 +93,21 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
             throw TypeCheckerError.splitFailed(stm: stm, actual: expType)
         }
         
-        let factor1: Double
-        let factor2: Double
+        //fix unknown types and get scaling factor for each pair element
         let fixedTypesAndFactors = try [(type1, idMaybeTyped1), (type2, idMaybeTyped2)].map { (type, idMaybeTyped) -> (Type, Double) in
             if let requiredType = idMaybeTyped.type {
-                let factor = factorToMakeType(type, matchType: requiredType)
+                //use the core type of the required type to solve for `unknown` types but keep the old replication count since this gets recomputed when variable is added to environment
                 let resultType = Type.tType(requiredType.coreType, type.replicationCount)
-                var dummyDelta = Environment.Delta()
-                var typeCopy = type
-                try makeType(&typeCopy, matchRequiredType: requiredType, withDelta: &dummyDelta, errorForFailure: .assignmentFailed(stm: stm, actual: type, expected: requiredType))
+                guard let factor = type.scalingFactorToConvertToType(requiredType) else {
+                    throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: requiredType)
+                }
                 return (resultType, factor)
             }
             return (type, 1)
         }
+        
+        let factor1: Double
+        let factor2: Double
         (type1, factor1) = fixedTypesAndFactors[0]
         (type2, factor2) = fixedTypesAndFactors[1]
         let maxFactor = max(factor1, factor2)
@@ -276,21 +278,13 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
 }
 
 private func makeType(_ type: inout Type, matchRequiredType requiredType: Type, withDelta delta: inout Environment.Delta, errorForFailure: TypeCheckerError) throws {
-    if !requiredType.isSubtype(of: type) {
-        //if possible, scale expression up to match required type
-        if type.coreType == requiredType.coreType {
-            let differingFactor = factorToMakeType(type, matchType: requiredType)
-            delta.scale(by: differingFactor)
-        }
-        else {
-            throw errorForFailure
-        }
+    if let factor = type.scalingFactorToConvertToType(requiredType) {
+        delta.scale(by: factor)
+    }
+    else {
+        throw errorForFailure
     }
     type = requiredType
-}
-
-private func factorToMakeType(_ type1: Type, matchType type2: Type) -> Double {
-    return max(1, type2.replicationCount / type1.replicationCount)
 }
 
 private func handleAddNoise(_ exps: [Exp]) throws -> Type {

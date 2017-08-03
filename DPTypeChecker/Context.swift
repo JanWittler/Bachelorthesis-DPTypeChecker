@@ -60,8 +60,11 @@ internal struct Context {
      - throws: Throws a `TypeCheckerError.variableNotFound` error if the variable is not found in the context.
      */
     func lookup(_ id: Id) throws -> Type {
-        if let type = values[id] {
-            return type.0
+        if let type = values[id]?.0 {
+            if type == .tTypeUnknown {
+                throw TypeCheckerError.accessToVariableWithUnknownType(id)
+            }
+            return type
         }
         throw TypeCheckerError.variableNotFound(id)
     }
