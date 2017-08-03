@@ -257,6 +257,15 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
             return (type, delta)
         }
         throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type])
+    case let .eNot(e1):
+        let (type, delta) = try inferType(e1)
+        let allowedCoreTypes: [CoreType] = [
+            .cTNamed(boolTypeIdent)
+        ]
+        if allowedCoreTypes.contains(type.coreType) {
+            return (type, delta)
+        }
+        throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type])
     case let .eTimes(e1, e2):
         return try handleMultiplication(e1, e2, originalExpression: exp)
     case let .ePlus(e1, e2):

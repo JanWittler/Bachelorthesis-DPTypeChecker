@@ -40,6 +40,8 @@ EList.   Exp15 ::= "[" [Exp] "]" ;
 EApp.    Exp15 ::= Id "(" [Exp] ")" ;
 
 ENegative. Exp14 ::= "-" Exp13 ;
+ENot.      Exp13 ::= "!"  Exp14 ;
+
 ETimes.  Exp12 ::= Exp12 "*"  Exp13 ;
 EPlus.   Exp11 ::= Exp11 "+"  Exp12 ;
 EMinus.  Exp11 ::= Exp11 "-"  Exp12 ;
