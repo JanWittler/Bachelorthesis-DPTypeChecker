@@ -69,7 +69,7 @@ private func containsReturnStatement(_ stms: [Stm]) -> Bool {
         case .sReturn:
             isReturn = true
         case let .sIfElse(_, ifStms, `else`):
-            isReturn = containsReturnStatement(ifStms) && `else`.stms == nil ? true : containsReturnStatement(`else`.stms!)
+            isReturn = containsReturnStatement(ifStms) && (`else`.stms == nil ? true : containsReturnStatement(`else`.stms!))
         default:
             isReturn = false
         }
@@ -328,6 +328,38 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
         }
         try environment.applyDelta(envDelta)
         try environment.addToCurrentContext(idMaybeTyped.id, type: unwrappedType)
+    case let .ifCondUnfold(headIdMaybeTyped, tailIdMaybeTyped, exp):
+        var (listType, delta) = try inferType(exp)
+        guard case var .cTList(elemType) = listType.coreType else {
+            throw TypeCheckerError.invalidIfCondition(stm: stm, message: "conditional unfold must be applied to list type\nactual: \(listType)")
+        }
+        
+        //fix unknown types and get scaling factor for each pair element
+        let fixedTypesAndFactors = try [(elemType, headIdMaybeTyped), (listType, tailIdMaybeTyped)].map { (type, idMaybeTyped) -> (Type, Double) in
+            if let requiredType = idMaybeTyped.type {
+                //use the core type of the required type to solve for `unknown` types but keep the old replication count since this gets recomputed when variable is added to environment
+                let resultType = Type.tType(requiredType.coreType, type.replicationCount)
+                guard let factor = type.scalingFactorToConvertToType(requiredType) else {
+                    throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: requiredType)
+                }
+                return (resultType, factor)
+            }
+            return (type, 1)
+        }
+        
+        let factor1: Double
+        let factor2: Double
+        (elemType, factor1) = fixedTypesAndFactors[0]
+        (listType, factor2) = fixedTypesAndFactors[1]
+        let maxFactor = max(factor1, factor2)
+        delta.scale(by: maxFactor)
+        //since both variables are scaled by `maxFactor` it would be wrong to use the annotated types, rather we need to compute the scaled type from the inferred type
+        //note: if the `maxFactor` is equal to the factor of the component, the scaled type will match the annotated type
+        try environment.applyDelta(delta)
+        let head = headIdMaybeTyped.id
+        let tail = tailIdMaybeTyped.id
+        try environment.addToCurrentContext(head, type: .tType(elemType.coreType, elemType.replicationCount * maxFactor))
+        try environment.addToCurrentContext(tail, type: .tType(listType.coreType, listType.replicationCount * maxFactor))
     }
 }
 

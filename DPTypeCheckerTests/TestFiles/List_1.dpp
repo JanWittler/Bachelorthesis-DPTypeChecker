@@ -1,0 +1,24 @@
+//list unfolding
+
+func testList_1() -> Unit!1 {
+    let list: [Int!1]!10 = [1, 2, 3]
+    if (let (x, xs) = unfold list) {
+        assertTypeEqual(x, Int!1)
+        assertTypeEqual(xs, [Int!1]!1)
+        assertTypeEqual(list, [Int!1]!9)
+    }
+
+    if (let (x: Int!2, xs: [Int!1]!1) = unfold list) {
+        assertTypeEqual(x, Int!2)
+        assertTypeEqual(xs, [Int!1]!2)
+        assertTypeEqual(list, [Int!1]!7)
+
+        if (let (y: Int!2, ys) = unfold xs) {
+            assertTypeEqual(y, Int!2)
+            assertTypeEqual(ys, [Int!1]!2)
+            assertTypeEqual(xs, [Int!1]!0)
+            return ()
+        }
+    }
+    return ()
+}

@@ -46,6 +46,7 @@
 		2AA139591EEAAC2800389C66 /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA139581EEAAC2800389C66 /* Parser.swift */; };
 		2AA9D9111EE96F990078ABCF /* TypeChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA9D9101EE96F990078ABCF /* TypeChecker.swift */; };
 		2AD359411F331D8A00507AB9 /* List_0.dpp in Resources */ = {isa = PBXBuildFile; fileRef = 2AD359401F331D8A00507AB9 /* List_0.dpp */; };
+		2AD359431F33747300507AB9 /* List_1.dpp in Resources */ = {isa = PBXBuildFile; fileRef = 2AD359421F33747300507AB9 /* List_1.dpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -96,6 +97,7 @@
 		2AA139581EEAAC2800389C66 /* Parser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
 		2AA9D9101EE96F990078ABCF /* TypeChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeChecker.swift; sourceTree = "<group>"; };
 		2AD359401F331D8A00507AB9 /* List_0.dpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = List_0.dpp; sourceTree = "<group>"; };
+		2AD359421F33747300507AB9 /* List_1.dpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = List_1.dpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -153,6 +155,7 @@
 				2A9239551F1A37DA006F7AB7 /* Operators_1.dpp */,
 				2A9239531F1A2DD7006F7AB7 /* Operators_2.dpp */,
 				2AD359401F331D8A00507AB9 /* List_0.dpp */,
+				2AD359421F33747300507AB9 /* List_1.dpp */,
 			);
 			path = TestFiles;
 			sourceTree = "<group>";
@@ -328,6 +331,7 @@
 				2A1A4F3E1EF3D5B500126705 /* CoreTypes.dpp in Resources */,
 				2A42BE041F0F96DC0039A4E9 /* FuncApply_1.dpp in Resources */,
 				2A9239561F1A37DA006F7AB7 /* Operators_1.dpp in Resources */,
+				2AD359431F33747300507AB9 /* List_1.dpp in Resources */,
 				2A142E821EF00A9000FA8787 /* Pair_1.dpp in Resources */,
 				2A1A4F421EF3F2EE00126705 /* AddNoise_0.dpp in Resources */,
 				2A3748A21EF144890095C2A1 /* Split_1.dpp in Resources */,

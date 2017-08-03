@@ -21,6 +21,7 @@ IdTyped.    IdMaybeTyped ::= Id ":" Type ;
 
 IfCondCase. IfCond ::= "case" "let" IdMaybeTyped "=" Case Exp ;
 IfCondBool. IfCond ::= Exp ; 
+IfCondUnfold. IfCond ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" "unfold" Exp ;
 
 ElseNon.  Else ::= ;
 ElseStms. Else ::= "else" "{" [Stm] "}" ;
