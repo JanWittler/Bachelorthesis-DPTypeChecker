@@ -40,7 +40,7 @@ private func checkDef(_ def: Def) throws {
         }
         environment.pushContext()
         try addArgsToCurrentContext(args)
-        try stms.forEach { try checkStm($0, expectedReturnType: returnType) }
+        try checkStms(stms, expectedReturnType: returnType)
         environment.popContext()
     case let .dFunExposed(id, args, returnType, stms):
         //exposed functions must return an opp type since they are handed to the opponent
@@ -77,7 +77,13 @@ private func containsReturnStatement(_ stms: [Stm]) -> Bool {
     })
 }
 
-private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
+private func checkStms(_ stms: [Stm], expectedReturnType: Type) throws {
+    try checkStm(stms.first, expectedReturnType: expectedReturnType, followingStatements: Array(stms.dropFirst()))
+}
+
+private func checkStm(_ stm: Stm?, expectedReturnType: Type, followingStatements: [Stm]) throws {
+    guard let stm = stm else { return }
+    
     switch stm {
     case let .sInit(idMaybeTyped, exp):
         var (expType, envDelta) = try inferType(exp)
@@ -121,22 +127,21 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         try environment.addToCurrentContext(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
         
     case let .sIfElse(condition, ifStms, `else`):
-        //TODO: case handling must be corrected
-        // case handling is wrong since both if and else blocks may access variables outside the topmost context
-        // but if they do, the other contexts contain changes of both the if and else block, which may result in wrong usage count for following statements
-        // correct would be to branch and evaluate the if branch and all subsequent calls and after that the else branch with all subsequent calls and with the same environment as the if branch started with 
-        environment.pushContext()
-        
-        try handleIfCondition(condition, inStatement: stm)
-        
-        try ifStms.forEach { try checkStm($0, expectedReturnType: expectedReturnType) }
-        environment.popContext()
-        
         if let elseStms = `else`.stms {
+            //if and else branch must be evaluated independently of another to correctly manage environment
+            let currentEnvironment = environment
             environment.pushContext()
-            try elseStms.forEach { try checkStm($0, expectedReturnType: expectedReturnType) }
+            try checkStms(elseStms, expectedReturnType: expectedReturnType)
             environment.popContext()
+            try checkStms(followingStatements, expectedReturnType: expectedReturnType)
+            //restore the environment that existed before typechecking the else branch to typecheck the if branch with the old environment
+            environment = currentEnvironment
         }
+        
+        environment.pushContext()
+        try handleIfCondition(condition, inStatement: stm)
+        try checkStms(ifStms, expectedReturnType: expectedReturnType)
+        environment.popContext()
         
     case let .sReturn(exp):
         var (expType, envDelta) = try inferType(exp)
@@ -146,6 +151,8 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
     case let .sAssert(assertion):
         try checkAssertion(assertion)
     }
+
+    try checkStms(followingStatements, expectedReturnType: expectedReturnType)
 }
 
 private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
