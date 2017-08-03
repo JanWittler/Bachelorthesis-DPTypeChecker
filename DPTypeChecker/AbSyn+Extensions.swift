@@ -82,6 +82,17 @@ extension Arg {
     }
 }
 
+extension Else {
+    var stms: [Stm]? {
+        switch self {
+        case .elseNon:
+            return nil
+        case let .elseStms(stms):
+            return stms
+        }
+    }
+}
+
 extension Case {
     /**
      Returns the unwrapped type from the given type based on the case value.

@@ -8,7 +8,5 @@ func testSum_0(x: Test!2) -> Int!1 {
 		assertTypeEqual(left, Int!inf)
 		return left
 	}
-	else {
-		return 10
-	}
+    return 10
 }

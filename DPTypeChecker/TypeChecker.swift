@@ -68,8 +68,8 @@ private func containsReturnStatement(_ stms: [Stm]) -> Bool {
         switch stm {
         case .sReturn:
             isReturn = true
-        case let .sIfElse(_, ifStms, elseStms):
-            isReturn = containsReturnStatement(ifStms) && containsReturnStatement(elseStms)
+        case let .sIfElse(_, ifStms, `else`):
+            isReturn = containsReturnStatement(ifStms) && `else`.stms == nil ? true : containsReturnStatement(`else`.stms!)
         default:
             isReturn = false
         }
@@ -120,7 +120,7 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         try environment.addToCurrentContext(id1, type: .tType(type1.coreType, type1.replicationCount * maxFactor))
         try environment.addToCurrentContext(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
         
-    case let .sIfElse(condition, ifStms, elseStms):
+    case let .sIfElse(condition, ifStms, `else`):
         //TODO: case handling must be corrected
         // case handling is wrong since both if and else blocks may access variables outside the topmost context
         // but if they do, the other contexts contain changes of both the if and else block, which may result in wrong usage count for following statements
@@ -132,9 +132,11 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         try ifStms.forEach { try checkStm($0, expectedReturnType: expectedReturnType) }
         environment.popContext()
         
-        environment.pushContext()
-        try elseStms.forEach { try checkStm($0, expectedReturnType: expectedReturnType) }
-        environment.popContext()
+        if let elseStms = `else`.stms {
+            environment.pushContext()
+            try elseStms.forEach { try checkStm($0, expectedReturnType: expectedReturnType) }
+            environment.popContext()
+        }
         
     case let .sReturn(exp):
         var (expType, envDelta) = try inferType(exp)

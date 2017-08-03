@@ -12,7 +12,7 @@ ADecl.     Arg ::= Id ":" Type ;
 
 SInit.     Stm ::= "let" IdMaybeTyped "=" Exp ;
 SSplit.    Stm ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" Exp ;
-SIfElse.   Stm ::= "if" "(" IfCond ")" "{" [Stm] "}" "else" "{" [Stm] "}" ;
+SIfElse.   Stm ::= "if" "(" IfCond ")" "{" [Stm] "}" Else ;
 SReturn.   Stm ::= "return" Exp ;
 SAssert.   Stm ::= Assertion ;
 
@@ -21,6 +21,9 @@ IdTyped.    IdMaybeTyped ::= Id ":" Type ;
 
 IfCondCase. IfCond ::= "case" "let" IdMaybeTyped "=" Case Exp ;
 IfCondBool. IfCond ::= Exp ; 
+
+ElseNon.  Else ::= ;
+ElseStms. Else ::= "else" "{" [Stm] "}" ;
 
 rules Case ::= "inl" | "inr" ;
 
