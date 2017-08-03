@@ -81,52 +81,54 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
     switch stm {
     case let .sInit(idMaybeTyped, exp):
         var (expType, envDelta) = try inferType(exp)
-        var varType = expType
         if let type = idMaybeTyped.type {
-            try makeType(expType, matchRequiredType: type, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: expType, expected: type))
-            varType = type
+            try makeType(&expType, matchRequiredType: type, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: expType, expected: type))
         }
         try environment.applyDelta(envDelta)
-        try environment.addToCurrentContext(idMaybeTyped.id, type: varType)
+        try environment.addToCurrentContext(idMaybeTyped.id, type: expType)
         
     case let .sSplit(idMaybeTyped1, idMaybeTyped2, exp):
         var (expType, envDelta) = try inferType(exp)
-        guard case let .cTMulPair(type1, type2) = expType.coreType else {
+        guard case var .cTMulPair(type1, type2) = expType.coreType else {
             throw TypeCheckerError.splitFailed(stm: stm, actual: expType)
         }
-        try checkIfIdMaybeTyped(idMaybeTyped1, matchesType: type1, inStm: stm)
-        try checkIfIdMaybeTyped(idMaybeTyped2, matchesType: type2, inStm: stm)
-        let id1 = idMaybeTyped1.id
-        let id2 = idMaybeTyped2.id
-        var factor1: Double = 1
-        var factor2: Double = 1
-        if let type = idMaybeTyped1.type {
-            factor1 = type.replicationCount / type1.replicationCount
+        
+        let factor1: Double
+        let factor2: Double
+        let fixedTypesAndFactors = try [(type1, idMaybeTyped1), (type2, idMaybeTyped2)].map { (type, idMaybeTyped) -> (Type, Double) in
+            if let requiredType = idMaybeTyped.type {
+                let factor = factorToMakeType(type, matchType: requiredType)
+                let resultType = Type.tType(requiredType.coreType, type.replicationCount)
+                var dummyDelta = Environment.Delta()
+                var typeCopy = type
+                try makeType(&typeCopy, matchRequiredType: requiredType, withDelta: &dummyDelta, errorForFailure: .assignmentFailed(stm: stm, actual: type, expected: requiredType))
+                return (resultType, factor)
+            }
+            return (type, 1)
         }
-        if let type = idMaybeTyped2.type {
-            factor2 = type.replicationCount / type2.replicationCount
-        }
+        (type1, factor1) = fixedTypesAndFactors[0]
+        (type2, factor2) = fixedTypesAndFactors[1]
         let maxFactor = max(factor1, factor2)
         envDelta.scale(by: maxFactor)
         //since both variables are scaled by `maxFactor` it would be wrong to use the annotated types, rather we need to compute the scaled type from the inferred type
         //note: if the `maxFactor` is equal to the factor of the component, the scaled type will match the annotated type
         try environment.applyDelta(envDelta)
+        let id1 = idMaybeTyped1.id
+        let id2 = idMaybeTyped2.id
         try environment.addToCurrentContext(id1, type: .tType(type1.coreType, type1.replicationCount * maxFactor))
         try environment.addToCurrentContext(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
         
     case let .sCase(idMaybeTyped, sumCase, exp, ifStms, elseStms):
         //TODO: case handling must be corrected
         // case handling is wrong since both if and else blocks may access variables outside the topmost context
-        // but if they do, the other contexts are contain changes of both the if and else block, which may result in wrong usage count for following statements
+        // but if they do, the other contexts contain changes of both the if and else block, which may result in wrong usage count for following statements
         // correct would be to branch and evaluate the if branch and all subsequent calls and after that the else branch with all subsequent calls and with the same environment as the if branch started with 
         environment.pushContext()
         
         var (condType, envDelta) = try inferType(exp)
         var unwrappedType = try sumCase.unwrappedType(from: condType)
-        try checkIfIdMaybeTyped(idMaybeTyped, matchesType: unwrappedType, inStm: stm)
-        if let type = idMaybeTyped.type {
-            try makeType(condType, matchRequiredType: type, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: condType, expected: type))
-            unwrappedType = type
+        if let requiredType = idMaybeTyped.type {
+            try makeType(&unwrappedType, matchRequiredType: requiredType, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: unwrappedType, expected: requiredType))
         }
         try environment.applyDelta(envDelta)
         try environment.addToCurrentContext(idMaybeTyped.id, type: unwrappedType)
@@ -140,19 +142,11 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         
     case let .sReturn(exp):
         var (expType, envDelta) = try inferType(exp)
-        try makeType(expType, matchRequiredType: expectedReturnType, withDelta: &envDelta, errorForFailure: .invalidReturnType(actual: expType, expected: expectedReturnType))
+        try makeType(&expType, matchRequiredType: expectedReturnType, withDelta: &envDelta, errorForFailure: .invalidReturnType(actual: expType, expected: expectedReturnType))
         try environment.applyDelta(envDelta)
         
     case let .sAssert(assertion):
         try checkAssertion(assertion)
-    }
-}
-
-private func checkIfIdMaybeTyped(_ idMaybeTyped: IdMaybeTyped, matchesType type: Type, inStm stm: Stm) throws {
-    if let expectedType = idMaybeTyped.type {
-        guard type.isSubtype(of: expectedType) else {
-            throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: expectedType)
-        }
     }
 }
 
@@ -184,7 +178,7 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
         let type = Type.tType(try environment.lookupCoreType(typeId), 1)
         var (expType, delta) = try inferType(exp)
         let requiredType = try sumCase.unwrappedType(from: type)
-        try makeType(expType, matchRequiredType: requiredType, withDelta: &delta, errorForFailure: .mismatchingTypesForSumType(exp: exp, actual: expType, expected: requiredType))
+        try makeType(&expType, matchRequiredType: requiredType, withDelta: &delta, errorForFailure: .mismatchingTypesForSumType(exp: exp, actual: expType, expected: requiredType))
         return (.tType(type.coreType, 1), delta)
     case let .eApp(id, exps):
         guard id != addNoiseId else {
@@ -222,7 +216,7 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
         for i in 0..<expTypesAndDeltas.count {
             var (argType, argDelta) = expTypesAndDeltas[i]
             let requiredType = args[i]
-            try makeType(argType, matchRequiredType: requiredType, withDelta: &argDelta, errorForFailure: .mismatchingTypeForFunctionArgument(exp: exp, index: i, actual: argType, expected: requiredType))
+            try makeType(&argType, matchRequiredType: requiredType, withDelta: &argDelta, errorForFailure: .mismatchingTypeForFunctionArgument(exp: exp, index: i, actual: argType, expected: requiredType))
             delta = delta.merge(with: argDelta)
         }
         
@@ -248,9 +242,9 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
     case let .eTimes(e1, e2):
         return try handleMultiplication(e1, e2, originalExpression: exp)
     case let .ePlus(e1, e2):
-        return try handleEPlusOrEMinus(e1, e2, originalExpression: exp)
+        return try handleAdditionOrSubtraction(e1, e2, originalExpression: exp)
     case let .eMinus(e1, e2):
-        return try handleEPlusOrEMinus(e1, e2, originalExpression: exp)
+        return try handleAdditionOrSubtraction(e1, e2, originalExpression: exp)
     case let .eLt(e1, e2):
         return try handleComparison(e1, e2, originalExpression: exp)
     case let .eGt(e1, e2):
@@ -281,17 +275,22 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
     }
 }
 
-private func makeType(_ type: Type, matchRequiredType requiredType: Type, withDelta delta: inout Environment.Delta, errorForFailure: TypeCheckerError) throws {
+private func makeType(_ type: inout Type, matchRequiredType requiredType: Type, withDelta delta: inout Environment.Delta, errorForFailure: TypeCheckerError) throws {
     if !requiredType.isSubtype(of: type) {
         //if possible, scale expression up to match required type
         if type.coreType == requiredType.coreType {
-            let differingFactor = requiredType.replicationCount / type.replicationCount
+            let differingFactor = factorToMakeType(type, matchType: requiredType)
             delta.scale(by: differingFactor)
         }
         else {
             throw errorForFailure
         }
     }
+    type = requiredType
+}
+
+private func factorToMakeType(_ type1: Type, matchType type2: Type) -> Double {
+    return max(1, type2.replicationCount / type1.replicationCount)
 }
 
 private func handleAddNoise(_ exps: [Exp]) throws -> Type {
@@ -312,7 +311,7 @@ private func handleAddNoise(_ exps: [Exp]) throws -> Type {
     return .tTypeExponential(expType.coreType)
 }
 
-private func handleEPlusOrEMinus(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp) throws -> (Type, Environment.Delta) {
+private func handleAdditionOrSubtraction(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp) throws -> (Type, Environment.Delta) {
     let (type1, delta1) = try inferType(e1)
     let (type2, delta2) = try inferType(e2)
     let allowedCoreTypes: [CoreType] = [
@@ -323,7 +322,7 @@ private func handleEPlusOrEMinus(_ e1: Exp, _ e2: Exp, originalExpression exp: E
         //instead of subtyping to replication count 1, rather subtype only so far that type1 and type2 match
         let lowerReplicationCount = min(type1.replicationCount, type2.replicationCount)
         let resultType = Type.tType(type1.coreType, lowerReplicationCount)
-        return (resultType, delta1.merge(with:delta2))
+        return (resultType, delta1.merge(with: delta2))
     }
     throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
 }
