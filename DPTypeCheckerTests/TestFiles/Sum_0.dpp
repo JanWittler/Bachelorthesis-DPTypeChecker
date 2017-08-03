@@ -3,7 +3,7 @@
 typedef Test = union Int!inf | Unit!inf
 
 func testSum_0(x: Test!2) -> Int!1 {
-	if (case left = inl x) {
+	if (case let left = inl x) {
 		assertTypeEqual(x, Test!1)
 		assertTypeEqual(left, Int!inf)
 		return left

@@ -68,7 +68,7 @@ private func containsReturnStatement(_ stms: [Stm]) -> Bool {
         switch stm {
         case .sReturn:
             isReturn = true
-        case let .sCase(_, _, _, ifStms, elseStms):
+        case let .sIfElse(_, ifStms, elseStms):
             isReturn = containsReturnStatement(ifStms) && containsReturnStatement(elseStms)
         default:
             isReturn = false
@@ -120,20 +120,14 @@ private func checkStm(_ stm: Stm, expectedReturnType: Type) throws {
         try environment.addToCurrentContext(id1, type: .tType(type1.coreType, type1.replicationCount * maxFactor))
         try environment.addToCurrentContext(id2, type: .tType(type2.coreType, type2.replicationCount * maxFactor))
         
-    case let .sCase(idMaybeTyped, sumCase, exp, ifStms, elseStms):
+    case let .sIfElse(condition, ifStms, elseStms):
         //TODO: case handling must be corrected
         // case handling is wrong since both if and else blocks may access variables outside the topmost context
         // but if they do, the other contexts contain changes of both the if and else block, which may result in wrong usage count for following statements
         // correct would be to branch and evaluate the if branch and all subsequent calls and after that the else branch with all subsequent calls and with the same environment as the if branch started with 
         environment.pushContext()
         
-        var (condType, envDelta) = try inferType(exp)
-        var unwrappedType = try sumCase.unwrappedType(from: condType)
-        if let requiredType = idMaybeTyped.type {
-            try makeType(&unwrappedType, matchRequiredType: requiredType, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: unwrappedType, expected: requiredType))
-        }
-        try environment.applyDelta(envDelta)
-        try environment.addToCurrentContext(idMaybeTyped.id, type: unwrappedType)
+        try handleIfCondition(condition, inStatement: stm)
         
         try ifStms.forEach { try checkStm($0, expectedReturnType: expectedReturnType) }
         environment.popContext()
@@ -305,6 +299,25 @@ private func makeType(_ type: inout Type, matchRequiredType requiredType: Type, 
         throw errorForFailure
     }
     type = requiredType
+}
+
+private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws {
+    switch condition {
+    case let .ifCondBool(exp):
+        let (type, delta) = try inferType(exp)
+        guard type.coreType == .cTTypedef(boolTypeIdent) else {
+            throw TypeCheckerError.invalidIfCondition(stm: stm, message: "an if condition must be of `Bool` type but was \(type)")
+        }
+        try environment.applyDelta(delta)
+    case let .ifCondCase(idMaybeTyped, sumCase, exp):
+        var (condType, envDelta) = try inferType(exp)
+        var unwrappedType = try sumCase.unwrappedType(from: condType)
+        if let requiredType = idMaybeTyped.type {
+            try makeType(&unwrappedType, matchRequiredType: requiredType, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: unwrappedType, expected: requiredType))
+        }
+        try environment.applyDelta(envDelta)
+        try environment.addToCurrentContext(idMaybeTyped.id, type: unwrappedType)
+    }
 }
 
 private func handleAddNoise(_ exps: [Exp]) throws -> Type {

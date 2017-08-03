@@ -22,6 +22,7 @@ public enum TypeCheckerError: Error {
     case invalidReturnType(actual: Type, expected: Type)
     case splitFailed(stm: Stm, actual: Type)
     case caseApplicationFailed(case: Case, actual: Type)
+    case invalidIfCondition(stm: Stm, message: String)
     case mismatchingTypesForSumType(exp: Exp, actual: Type, expected: Type)
     case listWithHeterogenousElementsNotSupported(exp: Exp, types: [Type])
     case tooManyArgumentsToFunction(exp: Exp, actualCount: Int, expectedCount: Int)
@@ -73,6 +74,8 @@ extension TypeCheckerError: CustomStringConvertible {
             "actual: \(actual)"
         case let .caseApplicationFailed(case: `case`, actual: actual):
             return "failed to apply " + `case`.show() + " on expression of type \(actual)"
+        case let.invalidIfCondition(stm: stm, message: message):
+            return message + "\n" + "in statement: " + stm.show()
         case let .mismatchingTypesForSumType(exp: exp, actual: actual, expected: expected):
             return "mismatching types when trying to construct sum type" + "\n" +
                 "expression: " + exp.show() + "\n" +
