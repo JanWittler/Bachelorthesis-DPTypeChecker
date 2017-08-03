@@ -307,7 +307,7 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
     switch condition {
     case let .ifCondBool(exp):
         let (type, delta) = try inferType(exp)
-        guard type.coreType == .cTTypedef(boolTypeIdent) else {
+        guard type.coreType == .cTNamed(boolTypeIdent) else {
             throw TypeCheckerError.invalidIfCondition(stm: stm, message: "an if condition must be of `Bool` type but was \(type)")
         }
         try environment.applyDelta(delta)
@@ -413,10 +413,10 @@ private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp)
     
     //booleans can not be ordered, thus only allow them for `==` and `!=`
     if case .eEq = exp {
-        allowedCoreTypes.append(.cTTypedef(boolTypeIdent))
+        allowedCoreTypes.append(.cTNamed(boolTypeIdent))
     }
     else if case .eNeq = exp {
-        allowedCoreTypes.append(.cTTypedef(boolTypeIdent))
+        allowedCoreTypes.append(.cTNamed(boolTypeIdent))
     }
     
     if allowedCoreTypes.contains(type1.coreType) && type1.coreType == type2.coreType {
@@ -430,7 +430,7 @@ private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp)
                 delta2.scale(by: .infinity)
                 try environmentCopy.applyDelta(delta2)
             }
-            return (.tTypeExponential(.cTTypedef(boolTypeIdent)), delta1.merge(with:delta2))
+            return (.tTypeExponential(.cTNamed(boolTypeIdent)), delta1.merge(with:delta2))
         }
         catch {
             //catch scaling error to throw more descriptive arithmetic error instead

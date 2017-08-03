@@ -36,7 +36,7 @@ extension Type {
         case .tTypeUnknown:
             return .cTUnknown
         }
-        if case let .cTTypedef(id) = coreType {
+        if case let .cTNamed(id) = coreType {
             do {
                 return try environment.lookupCoreType(id)
             }
@@ -102,7 +102,7 @@ extension Case {
      - throws: Throws a `TypeCheckerError.caseApplicationFailed` error if the given type cannot be unwrapped because its core type is not a sum type.
      */
     func unwrappedType(from type: Type) throws -> Type {
-        //no need to handle .cTTypedef explicit, since it is handled in `Type.coreType` getter
+        //no need to handle .cTNamed explicit, since it is handled in `Type.coreType` getter
         guard case let .cTSum(lType, rType) = type.coreType else {
             throw TypeCheckerError.caseApplicationFailed(case: self, actual: type)
         }
@@ -144,7 +144,7 @@ extension Type {
             return r1.isSubtype(of: r2) && a1.count == a2.count && zip(a1, a2).reduce(true) { $0 && $1.1.isSubtype(of: $1.0) }
         case (.cTUnknown, .cTUnknown):
             return true
-        //case .cTTypedef ommitted since it is handled implicit by `Type.coreType` accessor
+        //case .cTNamed ommitted since it is handled implicit by `Type.coreType` accessor
         default:
             return false
         }
@@ -201,7 +201,7 @@ extension Type {
             case (let .cTList(elem1), let .cTList(elem2)):
                 return internalCanBeConverted(elem1, elem2, false)
             //case .cTFunction ommitted since functions cannot have unknown types
-            //case .cTTypedef ommitted since it is handled implicit by `Type.coreType` accessor
+            //case .cTNamed ommitted since it is handled implicit by `Type.coreType` accessor
             //unknown core type already handled by unknown type
             default:
                 return $1.isSubtype(of: $0)
@@ -239,7 +239,7 @@ private extension CoreType {
             return type.isOPPType
         case let .cTFunction(argTypes, returnType):
             return argTypes.reduce(true) { $0 && $1.isOPPType } && returnType.isOPPType
-        case let .cTTypedef(id):
+        case let .cTNamed(id):
             do {
                 let coreType = try environment.lookupCoreType(id)
                 return coreType.isOPPType
@@ -275,20 +275,20 @@ extension CoreType: Equatable {
             return true
         case (let .cTFunction(a1, r1), let cTFunction(a2, r2)):
             return r1 == r2 && a1.count == a2.count && zip(a1, a2).reduce(true) { $0 && $1.0 == $1.1 }
-        case (let .cTTypedef(id1), _):
+        case (let .cTNamed(id1), _):
             do {
                 let coreType = try environment.lookupCoreType(id1)
                 return coreType == rhs
             }
             catch {
                 //computed getters cannot throw, thus we must return a default value
-                if case let .cTTypedef(id2) = rhs {
+                if case let .cTNamed(id2) = rhs {
                     return id1 == id2
                 }
                 return false
             }
-        case (_, .cTTypedef):
-            //switch argument order to get handling of cTTypedef for first argument
+        case (_, .cTNamed):
+            //switch argument order to get handling of cTNamed for first argument
             return rhs == lhs
         case (.cTUnknown, .cTUnknown):
             return true
@@ -325,7 +325,7 @@ extension CoreType: CustomStringConvertible {
         case let .cTFunction(argTypes, returnType):
             let args = argTypes.map { $0.internalDescription }.joined(separator: ", ")
             return "((\(args)) -> \(returnType.internalDescription))"
-        case let .cTTypedef(id):
+        case let .cTNamed(id):
             do {
                 let type = try environment.lookupCoreType(id)
                 return type.description
