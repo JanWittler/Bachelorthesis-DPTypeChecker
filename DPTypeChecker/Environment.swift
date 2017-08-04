@@ -10,6 +10,7 @@ import Foundation
 
 public let addNoiseId = Id("add_noise")
 public let boolTypeIdent = Ident("Bool")
+public let optionalTypeIdent = Ident("Optional")
 
 /**
  An `Environment`-instance reflects the current state of the type checking process. It stores all global definitions for functions and type definitions and manages `Context`-objects.
@@ -21,8 +22,8 @@ internal struct Environment {
         case addNoise
         /// A function element with its arguments types and return type.
         case function(args: [Type], returnType: Type)
-        /// A  type defintion element with its associated core type.
-        case typedef(coreType: CoreType)
+        /// A  type defintion element with its associated core type and information if type contains generics.
+        case typedef(coreType: CoreType, containsGenerics: Bool)
     }
     
     /**
@@ -79,8 +80,10 @@ internal struct Environment {
     private var globals: [String : GlobalElement] = [
         //the `add_noise` function is present in every environment
         addNoiseId.value : .addNoise,
-        //Bool = (Unit!inf + Unit!inf)!1
-        boolTypeIdent.value : .typedef(coreType: .cTSum(.tTypeExponential(.cTBase(.unit)), .tTypeExponential(.cTBase(.unit))))
+        //Bool = Unit!inf + Unit!inf
+        boolTypeIdent.value : .typedef(coreType: .cTSum(.tTypeExponential(.cTBase(.unit)), .tTypeExponential(.cTBase(.unit))), containsGenerics: false),
+        //Optional = Unit!inf + τ
+        optionalTypeIdent.value : .typedef(coreType: .cTSum(.tTypeExponential(.cTBase(.unit)), .tTypeUnknown), containsGenerics: true)
     ]
     
     private mutating func addGlobal(_ global: GlobalElement, forId id: String) throws {
@@ -105,7 +108,7 @@ internal struct Environment {
     }
     
     /// The `Context`-objects managed by this environment.
-    var contexts : [Context] = []
+    private var contexts : [Context] = []
     /// The current context of the environment, which is the topmost context in the `contexts` stack.
     private var currentContext: Context! {
         get {
@@ -133,9 +136,11 @@ internal struct Environment {
      - id: The id of the function. This must be unique among other functions and type definitions.
      - arguments: The argument types of the function.
      - returnType: The return type of the function.
-     - throws: Throws a `TypeCheckerError.nameAlreadyInUse` error if the given id is already in use.
+     - throws: Throws a `TypeCheckerError.nameAlreadyInUse` error if the given id is already in use. Throws a `TypeCheckerError.invalidType` error if any given type is invalid.
      */
     mutating func addFunction(id: Id, arguments: [Type], returnType: Type) throws {
+        try (arguments + [returnType]).forEach { try $0.validate(inEnvironment: self) }
+        
         let function = GlobalElement.function(args: arguments, returnType: returnType)
         try addGlobal(function, forId: id.value)
     }
@@ -145,11 +150,13 @@ internal struct Environment {
      - parameters:
      - id: The id of the type. This must be unique among other type definitions and functions.
      - types: The two types from which the sum type is constructed.
-     - throws: Throws a `TypeCheckerError.nameAlreadyInUse` error if the given id is already in use.
+     - throws: Throws a `TypeCheckerError.nameAlreadyInUse` error if the given id is already in use. Throws a `TypeCheckerError.invalidType` error if any given type is invalid.
      */
     mutating func addSumType(name id: Ident, types: (Type, Type)) throws {
+        try [types.0, types.1].forEach { try $0.validate(inEnvironment: self) }
+        
         let sumType = CoreType.cTSum(types.0, types.1)
-        try addGlobal(.typedef(coreType: sumType), forId: id.value)
+        try addGlobal(.typedef(coreType: sumType, containsGenerics: false), forId: id.value)
     }
     
     /**
@@ -160,6 +167,7 @@ internal struct Environment {
      - throws: Throws a `TypeCheckerError.nameAlreadyInUse` error if the given id is already in use for a global element. Throws a `TypeCheckerError.variableAlreadyExists` error if the given id is already present in the current context.
      */
     mutating func addToCurrentContext(_ id: Id, type: Type) throws {
+        try type.validate(inEnvironment: self)
         try checkIdNotGlobalUsed(id.value)
         return try currentContext.add(id, type: type)
     }
@@ -205,11 +213,25 @@ internal struct Environment {
      - returns: Returns the core type of the type definition. Does not return a `Type`-instance because type definitions are not bound to any usage count constraints.
      - throws: Throws a `TypeCheckerError.typeNotFound` error if the type definition could not be found.
      */
-    func lookupCoreType(_ id: Ident) throws -> CoreType {
-        guard let global = globals[id.value], case let .typedef(coreType) = global else {
+    func typeDefinitionOfCoreType(with id: Ident) throws -> CoreType {
+        guard let global = globals[id.value], case let .typedef(coreType, _) = global else {
             throw TypeCheckerError.typeNotFound(id)
         }
         return coreType
+    }
+    
+    /**
+     Returns the core type associated with the given id. This can be used for types defined using `typedef` keyword or for predefined but not base types like `Bool` or `Optional<?>`.
+     - parameters:
+       - id: The id of the core type to search for.
+     - returns: Returns the core type associated with the given id. Does not return a `Type`-instance because global defined types are not bound to any usage count constraints.
+     - throws: Throws a `TypeCheckerError.typeNotFound` error if there was not type associated with the given id.
+     */
+    func coreTypeForId(_ id: Ident) throws -> CoreType {
+        guard let global = globals[id.value], case let .typedef(_, containsGenerics) = global else {
+            throw TypeCheckerError.typeNotFound(id)
+        }
+        return .cTNamed(id, containsGenerics ? .genericsType(.tTypeUnknown) : .genericsNone)
     }
     
     /**

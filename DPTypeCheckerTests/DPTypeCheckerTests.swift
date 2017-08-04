@@ -49,6 +49,11 @@ class DPTypeCheckerTests: XCTestCase {
         testFiles(files)
     }
     
+    func testOptional() {
+        let files = ["Optional_0.dpp"]
+        testFiles(files)
+    }
+    
 //MARK: helper methods
     
     private func testFiles(_ files: [String]) {

@@ -9,6 +9,7 @@
 import Foundation
 
 public enum TypeCheckerError: Error {
+    case invalidType(id: Ident, message: String)
     case nameAlreadyInUse(id: String, as: String)
     case functionNotFound(Id)
     case exposedFunctionDoesNotReturnOPPType(function: Id, returnType: Type)
@@ -37,6 +38,8 @@ public enum TypeCheckerError: Error {
 extension TypeCheckerError: CustomStringConvertible {
     public var description: String {
         switch self {
+        case let .invalidType(id: id, message: message):
+            return "invalid type declaration for `\(id.value)`" + "\n" + message
         case let .nameAlreadyInUse(id: id, as: usageType):
             return "unable to use Id `\(id)` because it is already used for a \(usageType)"
         case let .functionNotFound(id):

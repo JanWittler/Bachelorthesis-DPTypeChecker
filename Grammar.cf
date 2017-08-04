@@ -23,7 +23,7 @@ IfCondCase. IfCond ::= "case" "let" IdMaybeTyped "=" Case Exp ;
 IfCondBool. IfCond ::= Exp ; 
 IfCondUnfold. IfCond ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" "unfold" Exp ;
 
-ElseNon.  Else ::= ;
+ElseNone. Else ::= ;
 ElseStms. Else ::= "else" "{" [Stm] "}" ;
 
 rules Case ::= "inl" | "inr" ;
@@ -33,6 +33,8 @@ EFloat.  Exp15 ::= Double ;
 EUnit.   Exp15 ::= "(" ")" ;
 ETrue.   Exp15 ::= "true" ;
 EFalse.  Exp15 ::= "false" ;
+EOption. Exp15 ::= "Just" "(" Exp ")" ;
+ENothing.Exp15 ::= "Nothing" ;
 EId.     Exp15 ::= Id ;
 EPair.   Exp15 ::= "(" Exp "," Exp ")" ;
 ESum.    Exp15 ::= Ident "." Case "(" Exp ")" ;
@@ -55,8 +57,6 @@ EGtEq.   Exp9  ::= Exp9  ">=" Exp10 ;
 EEq.     Exp8  ::= Exp8  "==" Exp9 ;
 ENeq.    Exp8  ::= Exp8  "!=" Exp9 ;
 
-internal ETyped. Exp ::= "(" Exp ":" Type ")" ;
-
 separator Exp "," ;
 coercions Exp 15 ;
 
@@ -70,8 +70,11 @@ CTBase.    CoreType ::= BaseType ;
 CTMulPair. CoreType ::= "(" Type "," Type ")" ;
 CTSum.     CoreType ::= "(" Type "+" Type ")" ;
 CTList.    CoreType ::= "[" Type "]" ;
-CTNamed.   CoreType ::= Ident ;
+CTNamed.   CoreType ::= Ident Generics;
 CTFunction.CoreType ::= "(" "(" [Type] ")" "->" Type ")" ;
+
+GenericsNone. Generics ::= ;
+GenericsType. Generics ::= "<" Type ">" ;
 
 separator Type "," ;
 

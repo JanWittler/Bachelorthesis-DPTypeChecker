@@ -8,7 +8,7 @@
 
 import Foundation
 
-internal var environment = Environment()
+private var environment = Environment()
 
 func typeCheck(_ program: Program) throws {
     environment = Environment()
@@ -20,15 +20,22 @@ func typeCheck(_ program: Program) throws {
 }
 
 private func populateEnvironment(_ defs: [Def]) throws {
-    try defs.forEach { def in
+    //collect at first all typedefs, otherwise function signatures may not be validated
+    for case let .dTypedef(ident, lType, rType) in defs {
+        try environment.addSumType(name: ident, types: (lType, rType))
+    }
+    try defs.flatMap { def -> (Id, [Arg], Type)? in
+        //get all functions
         switch def {
         case let .dFun(id, args, returnType, _):
-            try environment.addFunction(id: id, arguments: args.map({ $0.type }), returnType: returnType)
-       case let .dFunExposed(id, args, returnType, _):
-            try environment.addFunction(id: id, arguments: args.map({ $0.type }), returnType: returnType)
-        case let .dTypedef(ident, lType, rType):
-            try environment.addSumType(name: ident, types: (lType, rType))
+            return (id, args, returnType)
+        case let .dFunExposed(id, args, returnType, _):
+            return (id, args, returnType)
+             case .dTypedef:
+            return nil
         }
+    }.forEach {
+        try environment.addFunction(id: $0, arguments: $1.map { $0.type }, returnType: $2)
     }
 }
 
@@ -44,7 +51,7 @@ private func checkDef(_ def: Def) throws {
         environment.popContext()
     case let .dFunExposed(id, args, returnType, stms):
         //exposed functions must return an opp type since they are handed to the opponent
-        guard returnType.isOPPType else {
+        guard returnType.isOPPType(inEnvironment: environment) else {
             throw TypeCheckerError.exposedFunctionDoesNotReturnOPPType(function: id, returnType: returnType)
         }
         try checkDef(.dFun(id, args, returnType, stms))
@@ -166,7 +173,13 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
     case .eTrue:
         fallthrough
     case .eFalse:
-        return (.tType(try environment.lookupCoreType(boolTypeIdent), 1), Environment.Delta())
+        return (.tType(try environment.coreTypeForId(boolTypeIdent), 1), Environment.Delta())
+    case let .eOption(e1):
+        let (type, delta) = try inferType(e1)
+        let resultType = Type.tType(try environment.coreTypeForId(optionalTypeIdent), 1).replaceAllGenericTypes(with: type)
+        return (resultType, delta)
+    case .eNothing:
+        return (.tType(try environment.coreTypeForId(optionalTypeIdent), 1), Environment.Delta())
     case let .eId(id):
         let type = try environment.lookup(id)
         let returnType = Type.tType(type.coreType, 1)
@@ -180,11 +193,15 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
         let delta = delta1.merge(with: delta2)
         return (returnType, delta)
     case let .eSum(typeId, sumCase, exp):
-        let type = Type.tType(try environment.lookupCoreType(typeId), 1)
         var (expType, delta) = try inferType(exp)
-        let requiredType = try sumCase.unwrappedType(from: type)
+        //check if expression's type matches type from type definition and if required scale correctly
+        let typeDefinition = Type.tType(try environment.typeDefinitionOfCoreType(with: typeId), 1)
+        let requiredType = try sumCase.unwrappedType(from: typeDefinition, inEnvironment: environment)
         try makeType(&expType, matchRequiredType: requiredType, withDelta: &delta, errorForFailure: .mismatchingTypesForSumType(exp: exp, actual: expType, expected: requiredType))
-        return (.tType(type.coreType, 1), delta)
+        
+        //don't return the type definition types but rather the named core type
+        let sumType = try environment.coreTypeForId(typeId)
+        return (.tType(sumType, 1), delta)
     case let .eList(exps):
         let typesAndDeltas = try exps.map { try inferType($0) }
         let types = typesAndDeltas.map { $0.0 }
@@ -216,7 +233,7 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
         do {
             (args, returnType) = try environment.lookupFunction(id)
         }
-        //if there was not function with the id, check if there is a variable with the id which has a function type
+        //if there was no function with the id, check if there is a variable with the id which has a function type
         catch let functionError {
             do {
                 let idType = try environment.lookup(id)
@@ -267,7 +284,7 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
     case let .eNot(e1):
         let (type, delta) = try inferType(e1)
         let allowedCoreTypes: [CoreType] = [
-            .cTNamed(boolTypeIdent)
+            try environment.coreTypeForId(boolTypeIdent)
         ]
         if allowedCoreTypes.contains(type.coreType) {
             return (type, delta)
@@ -291,21 +308,6 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
         return try handleComparison(e1, e2, originalExpression: exp)
     case let .eNeq(e1, e2):
         return try handleComparison(e1, e2, originalExpression: exp)
-    case let .eTyped(exp, type):
-        //TODO: for now this is accepted to get types where inferencing does not work yet but should be removed as soon as possible
-        do {
-            let (inferredType, delta) = try inferType(exp)
-            if inferredType == type {
-                return (type, delta)
-            }
-            else {
-                print("inferred type \(inferredType) for expression: " + exp.show() + "\nbut expression was annotated with type: \(type)")
-            }
-        }
-        catch let error as TypeCheckerError {
-            print("was not able to infer type for expression: " + exp.show() + "\ninferring failed with error: \(error)\nwill continue with annotated type: \(type)")
-        }
-        return (type, Environment.Delta())
     }
 }
 
@@ -323,13 +325,13 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
     switch condition {
     case let .ifCondBool(exp):
         let (type, delta) = try inferType(exp)
-        guard type.coreType == .cTNamed(boolTypeIdent) else {
+        guard try type.coreType == environment.coreTypeForId(boolTypeIdent) else {
             throw TypeCheckerError.invalidIfCondition(stm: stm, message: "an if condition must be of `Bool` type but was \(type)")
         }
         try environment.applyDelta(delta)
     case let .ifCondCase(idMaybeTyped, sumCase, exp):
         var (condType, envDelta) = try inferType(exp)
-        var unwrappedType = try sumCase.unwrappedType(from: condType)
+        var unwrappedType = try sumCase.unwrappedType(from: condType, inEnvironment: environment)
         if let requiredType = idMaybeTyped.type {
             try makeType(&unwrappedType, matchRequiredType: requiredType, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: unwrappedType, expected: requiredType))
         }
@@ -461,10 +463,10 @@ private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp)
     
     //booleans can not be ordered, thus only allow them for `==` and `!=`
     if case .eEq = exp {
-        allowedCoreTypes.append(.cTNamed(boolTypeIdent))
+        allowedCoreTypes.append(try environment.coreTypeForId(boolTypeIdent))
     }
     else if case .eNeq = exp {
-        allowedCoreTypes.append(.cTNamed(boolTypeIdent))
+        allowedCoreTypes.append(try environment.coreTypeForId(boolTypeIdent))
     }
     
     if allowedCoreTypes.contains(type1.coreType) && type1.coreType == type2.coreType {
@@ -478,7 +480,7 @@ private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp)
                 delta2.scale(by: .infinity)
                 try environmentCopy.applyDelta(delta2)
             }
-            return (.tTypeExponential(.cTNamed(boolTypeIdent)), delta1.merge(with:delta2))
+            return (.tTypeExponential(try environment.coreTypeForId(boolTypeIdent)), delta1.merge(with: delta2))
         }
         catch {
             //catch scaling error to throw more descriptive arithmetic error instead
@@ -507,6 +509,7 @@ private func constantValueFromExpression(_ exp: Exp) -> Double? {
 private func checkAssertion(_ assertion: Assertion) throws {
     switch assertion {
     case let .aTypeEqual(id, type):
+        try type.validate(inEnvironment: environment)
         let idType = try environment.lookup(id)
         let usageCount = try environment.lookupUsageCount(id)
         let updatedType: Type

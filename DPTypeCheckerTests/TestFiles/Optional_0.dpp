@@ -1,0 +1,27 @@
+//optionals
+
+typedef Sum = union Int!inf | Unit!inf
+
+func helper(x: Int!1, y: Int!1) -> Int!1 {
+    return x + y
+}
+
+func testOptional_0() -> Unit!1 {
+    let a = Just(1)
+    let b = Just((2.0, ()))
+    let c = Just(Sum.inl(10))
+    let d = Just([false, true, false])
+    let e = Just(helper(5))
+    let f: Optional<Bool!1>!7 = Just(false)
+    let g: Optional<Int!5>!10 = Nothing
+
+    assertTypeEqual(a, Optional<Int!1>!1)
+    assertTypeEqual(b, Optional<(Float!1, Unit!1)!1>!1)
+    assertTypeEqual(c, Optional<Sum!1>!1)
+    assertTypeEqual(d, Optional<[Bool!1]!1>!1)
+    assertTypeEqual(e, Optional<((Int!1) -> Int!1)!1>!1)
+    assertTypeEqual(f, Optional<Bool!1>!7)
+    assertTypeEqual(g, Optional<Int!5>!10)
+
+    return ()
+}
