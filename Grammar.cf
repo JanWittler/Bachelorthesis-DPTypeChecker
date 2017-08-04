@@ -39,6 +39,7 @@ EId.     Exp15 ::= Id ;
 EPair.   Exp15 ::= "(" Exp "," Exp ")" ;
 ESum.    Exp15 ::= Ident "." Case "(" Exp ")" ;
 EList.   Exp15 ::= "[" [Exp] "]" ;
+ERef.    Exp15 ::= "Ref" "<" Type ">" "(" ")" ;
 
 EApp.    Exp15 ::= Id "(" [Exp] ")" ;
 

@@ -222,6 +222,13 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
         else {
             return (.tType(.cTList(.tTypeUnknown), 1), Environment.Delta())
         }
+    case let .eRef(type):
+        try type.validate(inEnvironment: environment)
+        let readCoreType = try environment.coreTypeForId(readTypeIdent).replaceAllGenericTypes(with: type)
+        let writeCoreType = try environment.coreTypeForId(writeTypeIdent).replaceAllGenericTypes(with: type)
+        let readType = Type.tTypeExponential(readCoreType)
+        let writeType = Type.tTypeExponential(writeCoreType)
+        return (.tType(.cTMulPair(readType, writeType), 1), Environment.Delta())
     case let .eApp(id, exps):
         guard id != addNoiseId else {
             return (try handleAddNoise(exps), Environment.Delta())
@@ -237,12 +244,27 @@ private func inferType(_ exp: Exp) throws -> (Type, Environment.Delta) {
         catch let functionError {
             do {
                 let idType = try environment.lookup(id)
-                guard case let .cTFunction(aType, rType) = idType.coreType else {
+                delta.updateUsageCount(for: id, delta: 1)
+                switch idType.coreType {
+                case let .cTFunction(aTypes, rType):
+                    args = aTypes
+                    returnType = rType
+                //named type may be a function type
+                case let .cTNamed(id, generics):
+                    guard case let .cTFunction(aTypes, rType) = try environment.typeDefinitionOfCoreType(with: id) else {
+                        throw functionError
+                    }
+                    if let annotatedType = generics.annotatedType {
+                        args = aTypes.map { $0.replaceAllGenericTypes(with: annotatedType) }
+                        returnType = rType.replaceAllGenericTypes(with: annotatedType)
+                    }
+                    else {
+                        args = aTypes
+                        returnType = rType
+                    }
+                default:
                     throw functionError
                 }
-                delta.updateUsageCount(for: id, delta: 1)
-                args = aType
-                returnType = rType
             }
             //catch errors to throw the original function lookup error instead of the variable lookup one
             catch {

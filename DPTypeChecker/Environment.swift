@@ -8,9 +8,12 @@
 
 import Foundation
 
-public let addNoiseId = Id("add_noise")
-public let boolTypeIdent = Ident("Bool")
+public let addNoiseId        = Id("add_noise")
+
+public let boolTypeIdent     = Ident("Bool")
 public let optionalTypeIdent = Ident("Optional")
+public let readTypeIdent     = Ident("Read")
+public let writeTypeIdent    = Ident("Write")
 
 /**
  An `Environment`-instance reflects the current state of the type checking process. It stores all global definitions for functions and type definitions and manages `Context`-objects.
@@ -82,8 +85,12 @@ internal struct Environment {
         addNoiseId.value : .addNoise,
         //Bool = Unit!inf + Unit!inf
         boolTypeIdent.value : .typedef(coreType: .cTSum(.tTypeExponential(.cTBase(.unit)), .tTypeExponential(.cTBase(.unit))), containsGenerics: false),
-        //Optional = Unit!inf + τ
-        optionalTypeIdent.value : .typedef(coreType: .cTSum(.tTypeExponential(.cTBase(.unit)), .tTypeUnknown), containsGenerics: true)
+        //Optional<τ> = Unit!inf + τ
+        optionalTypeIdent.value : .typedef(coreType: .cTSum(.tTypeExponential(.cTBase(.unit)), .tTypeUnknown), containsGenerics: true),
+        //Read<τ> = () -> Optional<τ>!1
+        readTypeIdent.value : .typedef(coreType: .cTFunction([], .tType(.cTNamed(optionalTypeIdent, .genericsType(.tTypeUnknown)), 1)), containsGenerics: true),
+        //Write<τ> = τ -> Unit!inf
+        writeTypeIdent.value : .typedef(coreType: .cTFunction([.tTypeUnknown], .tTypeExponential(.cTBase(.unit))), containsGenerics: true)
     ]
     
     private mutating func addGlobal(_ global: GlobalElement, forId id: String) throws {
