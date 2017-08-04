@@ -13,8 +13,10 @@ guard CommandLine.argc > 1 else {
     exit(1)
 }
 
-guard let parseTree = parseFile(at: CommandLine.arguments[1]) else {
-    print("could not parse file at path '\(CommandLine.arguments[1])'")
+let fileName = CommandLine.arguments[1]
+print("Parsing \(URL(string: fileName)?.lastPathComponent ?? fileName)")
+guard let parseTree = parseFile(at: fileName) else {
+    print("could not parse file at path '\(fileName)'")
     exit(1)
 }
 
