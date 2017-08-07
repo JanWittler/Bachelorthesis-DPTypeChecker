@@ -155,8 +155,8 @@ internal struct Environment {
     /**
      Adds a type definition for a sum type to the environment's global elements.
      - parameters:
-     - id: The id of the type. This must be unique among other type definitions and functions.
-     - types: The two types from which the sum type is constructed.
+       - id: The id of the type. This must be unique among other type definitions and functions.
+       - types: The two types from which the sum type is constructed.
      - throws: Throws a `TypeCheckerError.nameAlreadyInUse` error if the given id is already in use. Throws a `TypeCheckerError.invalidType` error if any given type is invalid.
      */
     mutating func addSumType(name id: Ident, types: (Type, Type)) throws {
