@@ -47,8 +47,10 @@
 		2A9BA9871EE802EB00BE2F00 /* Parser.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A9BA9801EE802EB00BE2F00 /* Parser.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2AA139591EEAAC2800389C66 /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA139581EEAAC2800389C66 /* Parser.swift */; };
 		2AA9D9111EE96F990078ABCF /* TypeChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AA9D9101EE96F990078ABCF /* TypeChecker.swift */; };
+		2AB783721F3897F800DB72D5 /* Example1+Assertions.dpp in Resources */ = {isa = PBXBuildFile; fileRef = 2AB783711F3897F800DB72D5 /* Example1+Assertions.dpp */; };
 		2AD359411F331D8A00507AB9 /* List_0.dpp in Resources */ = {isa = PBXBuildFile; fileRef = 2AD359401F331D8A00507AB9 /* List_0.dpp */; };
 		2AD359431F33747300507AB9 /* List_1.dpp in Resources */ = {isa = PBXBuildFile; fileRef = 2AD359421F33747300507AB9 /* List_1.dpp */; };
+		2AEB80DD1F361291008C1A69 /* Example1.dpp in Resources */ = {isa = PBXBuildFile; fileRef = 2AEB80DC1F361291008C1A69 /* Example1.dpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -100,8 +102,10 @@
 		2A9BA9801EE802EB00BE2F00 /* Parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Parser.h; sourceTree = "<group>"; };
 		2AA139581EEAAC2800389C66 /* Parser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
 		2AA9D9101EE96F990078ABCF /* TypeChecker.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TypeChecker.swift; sourceTree = "<group>"; };
+		2AB783711F3897F800DB72D5 /* Example1+Assertions.dpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Example1+Assertions.dpp"; sourceTree = "<group>"; };
 		2AD359401F331D8A00507AB9 /* List_0.dpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = List_0.dpp; sourceTree = "<group>"; };
 		2AD359421F33747300507AB9 /* List_1.dpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = List_1.dpp; sourceTree = "<group>"; };
+		2AEB80DC1F361291008C1A69 /* Example1.dpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Example1.dpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -162,6 +166,8 @@
 				2AD359421F33747300507AB9 /* List_1.dpp */,
 				2A58DC711F3470EC0011E497 /* Optional_0.dpp */,
 				2A58DC731F34C93E0011E497 /* Ref_0.dpp */,
+				2AEB80DC1F361291008C1A69 /* Example1.dpp */,
+				2AB783711F3897F800DB72D5 /* Example1+Assertions.dpp */,
 			);
 			path = TestFiles;
 			sourceTree = "<group>";
@@ -343,8 +349,10 @@
 				2A1A4F421EF3F2EE00126705 /* AddNoise_0.dpp in Resources */,
 				2A3748A21EF144890095C2A1 /* Split_1.dpp in Resources */,
 				2A3748A01EF132550095C2A1 /* Split_0.dpp in Resources */,
+				2AEB80DD1F361291008C1A69 /* Example1.dpp in Resources */,
 				2A42BE061F0FD4740039A4E9 /* Operators_0.dpp in Resources */,
 				2A1A4F401EF3EAB500126705 /* FuncApply_0.dpp in Resources */,
+				2AB783721F3897F800DB72D5 /* Example1+Assertions.dpp in Resources */,
 				2AD359411F331D8A00507AB9 /* List_0.dpp in Resources */,
 				2A9239541F1A2DD7006F7AB7 /* Operators_2.dpp in Resources */,
 				2A142E811EF00A9000FA8787 /* Pair_0.dpp in Resources */,

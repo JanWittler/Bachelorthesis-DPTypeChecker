@@ -1,0 +1,76 @@
+//Table 10 from 'Differential Privacy by Typing in Security Protocols' (long version)
+
+//begin stub crytographic library
+typedef SKey = union Unit!inf | Unit!inf
+
+func mkSKey() -> SKey!inf {
+    return SKey.inl(())
+}
+
+func senc(key: SKey!1, value: Int!1) -> Int!inf {
+    return 0
+}
+
+func sdec(key: SKey!1, encValue: Int!inf) -> Optional<Int!1>!1 {
+    return Just(0)
+}
+
+func setFilter(method: ((Float!1) -> Bool!1)!inf, list: [Float!1]!inf) -> [Float!1]!inf {
+    return list
+}
+
+func over40(x: Float!1) -> Bool!1 {
+    return true
+}
+
+func size(list: [Float!1]!1) -> Int!1 {
+    return 0
+}
+//end stub crythographic library
+
+exposed func p(database: ([Float!1]!1, [Float!1]!1)!1) -> ((Optional<Int!inf>!inf, Optional<Int!inf>!inf)!inf, (((Int!inf, Int!inf)!inf) -> Optional<Int!inf>!inf)!inf)!inf {
+    let (d1, d2) = database
+    let (r_a, w_a) = ref<[Float!1]!1>()
+    let (r_b, w_b) = ref<[Float!1]!1>()
+    let store_a = w_a(d1)
+    let store_b = w_a(d2)
+    let k_a = mkSKey()
+    let k_b = mkSKey()
+
+    assertTypeEqual(d1, [Float!1]!0)
+    assertTypeEqual(d2, [Float!1]!0)
+    assertTypeEqual(r_a, Read<[Float!1]!1>!inf)
+    assertTypeEqual(r_b, Read<[Float!1]!1>!inf)
+    assertTypeEqual(w_a, Write<[Float!1]!1>!inf)
+    assertTypeEqual(w_b, Write<[Float!1]!1>!inf)
+    assertTypeEqual(store_a, Unit!inf)
+    assertTypeEqual(store_b, Unit!inf)
+    assertTypeEqual(k_a, SKey!inf)
+    assertTypeEqual(k_b, SKey!inf)
+
+    return ((s(r_a, k_a), s(r_b, k_b)), c(k_a, k_b))
+}
+
+func s(r_i: Read<[Float!1]!1>!inf, k_i: SKey!inf) -> Optional<Int!inf>!inf {
+    let d_i: Optional<[Float!1]!1>!inf = r_i()
+    if (case let d2_i: [Float!1]!inf = inr d_i) {
+        let d3_i: [Float!1]!inf = setFilter(over40(), d2_i)
+        let query_i: Int!inf = size(d3_i)
+        return Just(senc(k_i, query_i))
+    }
+    return Nothing
+}
+
+func c(key_a: SKey!inf, key_b: SKey!inf, encValues: (Int!inf, Int!inf)!inf) -> Optional<Int!inf>!inf {
+    let (encValue_a, encValue_b) = encValues
+    let q_a = sdec(key_a, encValue_a)
+    let q_b = sdec(key_b, encValue_b)
+    if (case let q2_a = inr q_a) {
+        if (case let q2_b = inr q_b) {
+            let query = q2_a + q2_b
+            return Just(add_noise(query))
+
+        }
+    }
+    return Nothing
+}
