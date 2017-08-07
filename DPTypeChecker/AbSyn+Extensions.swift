@@ -371,8 +371,11 @@ private extension CoreType {
             return argTypes.reduce(true) { $0 && $1.isOPPType(inEnvironment: environment) } && returnType.isOPPType(inEnvironment: environment)
         case let .cTNamed(id, generics):
             do {
-                let coreType = try environment.typeDefinitionOfCoreType(with: id)
-                return coreType.isOPPType(inEnvironment: environment) && (generics.annotatedType?.isOPPType(inEnvironment: environment) ?? true)
+                var coreType = try environment.typeDefinitionOfCoreType(with: id)
+                if let annotatedType = generics.annotatedType {
+                    coreType = coreType.replaceAllGenericTypes(with: annotatedType)
+                }
+                return coreType.isOPPType(inEnvironment: environment)
             }
             catch {
                 //computed getters cannot throw, thus we must return a default value
