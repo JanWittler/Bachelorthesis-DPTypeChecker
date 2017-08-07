@@ -13,6 +13,7 @@ public enum TypeCheckerError: Error {
     case nameAlreadyInUse(id: String, as: String)
     case functionNotFound(Id)
     case exposedFunctionDoesNotReturnOPPType(function: Id, returnType: Type)
+    case failedToConvertTypeToOPPType(exp: Exp, type: Type)
     case typeNotFound(Ident)
     case variableAlreadyExists(Id)
     case variableNotFound(Id)
@@ -46,8 +47,11 @@ extension TypeCheckerError: CustomStringConvertible {
             return "function `\(id.value)` not found"
         case let .exposedFunctionDoesNotReturnOPPType(function: id, returnType: type):
             return "exposed functions must always return an OPP type\n" +
-                "function: \(id)" +
+            "function: \(id)" + "\n" +
             "actual: \(type)"
+        case let .failedToConvertTypeToOPPType(exp: exp, type: type):
+            return "failed to convert \(type) to OPP type" + "\n" +
+            "in expression: " + exp.show()
         case let .typeNotFound(id):
             return "type `\(id.value)` not found"
         case let .variableAlreadyExists(id):
