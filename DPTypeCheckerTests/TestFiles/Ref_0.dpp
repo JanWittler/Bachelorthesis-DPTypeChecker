@@ -1,7 +1,7 @@
 //read and write
 
 func testRef_0() -> Read<Int!1>!inf {
-    let (read_int, write_int) = Ref<Int!3>()
+    let (read_int, write_int) = ref<Int!3>()
 
     assertTypeEqual(read_int, Read<Int!3>!inf)
     assertTypeEqual(write_int, Write<Int!3>!inf)
