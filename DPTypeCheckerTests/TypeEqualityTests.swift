@@ -10,11 +10,11 @@ import XCTest
 
 class TypeEqualityTests: XCTestCase {
     func testReplicationCountInequality() {
-        let coreType = CoreType.cTBase(.unit)
-        let t1 = Type.tType(coreType, .infinity)
-        let t2 = Type.tTypeExponential(coreType)
-        let t3 = Type.tType(coreType, 14)
-        let t4 = Type.tTypeConvenienceInt(coreType, 14)
+        let coreType = CoreType.base(.unit)
+        let t1 = Type.default(coreType, .infinity)
+        let t2 = Type.exponential(coreType)
+        let t3 = Type.default(coreType, 14)
+        let t4 = Type.convenienceInt(coreType, 14)
         
         //self-comparison must be tested, since equality is calculated based on value, not on value's memory address
         XCTAssertTrue(t1 == t1)
@@ -29,15 +29,15 @@ class TypeEqualityTests: XCTestCase {
     }
     
     func testBasicTypeEquality() {
-        let intType1 = Type.tType(.cTBase(.int), 4)
-        let intType2 = Type.tTypeConvenienceInt(.cTBase(.int), 4)
+        let intType1 = Type.default(.base(.int), 4)
+        let intType2 = Type.convenienceInt(.base(.int), 4)
         
         XCTAssertTrue(intType1 == intType1)
         XCTAssertTrue(intType1 == intType2)
         XCTAssertTrue(intType2 == intType1)
         
-        let doubleType1 = Type.tTypeExponential(.cTBase(.float))
-        let doubleType2 = Type.tType(.cTBase(.float), .infinity)
+        let doubleType1 = Type.exponential(.base(.float))
+        let doubleType2 = Type.default(.base(.float), .infinity)
         
         XCTAssertTrue(doubleType1 == doubleType2)
         
@@ -46,12 +46,12 @@ class TypeEqualityTests: XCTestCase {
     }
     
     func testComposedTypeEquality() {
-        let t1 = Type.tType(.cTBase(.unit), 1)
-        let t2 = Type.tTypeExponential(.cTBase(.int))
+        let t1 = Type.default(.base(.unit), 1)
+        let t2 = Type.exponential(.base(.int))
         
-        let pair1 = Type.tType(.cTMulPair(t1, t2), 3)
-        let pair2 = Type.tType(.cTMulPair(t2, t1), 3)
-        let pair3 = Type.tType(.cTMulPair(t1, t2), 1)
+        let pair1 = Type.default(.mulPair(t1, t2), 3)
+        let pair2 = Type.default(.mulPair(t2, t1), 3)
+        let pair3 = Type.default(.mulPair(t1, t2), 1)
         
         XCTAssertTrue(pair1 == pair1)
         XCTAssertTrue(pair1 != pair2)
@@ -59,9 +59,9 @@ class TypeEqualityTests: XCTestCase {
         XCTAssertFalse(pair1 == t1)
         XCTAssertFalse(pair1 == t2)
         
-        let sum1 = Type.tType(.cTSum(t1, t2), 3)
-        let sum2 = Type.tType(.cTSum(t2, t1), 3)
-        let sum3 = Type.tType(.cTSum(t1, t2), 1)
+        let sum1 = Type.default(.sum(t1, t2), 3)
+        let sum2 = Type.default(.sum(t2, t1), 3)
+        let sum3 = Type.default(.sum(t1, t2), 1)
         
         XCTAssertTrue(sum1 == sum1)
         XCTAssertTrue(sum1 != sum2)
@@ -71,9 +71,9 @@ class TypeEqualityTests: XCTestCase {
         XCTAssertFalse(sum1 == t1)
         XCTAssertFalse(sum1 == t2)
         
-        let list1 = Type.tType(.cTList(t1), 3)
-        let list2 = Type.tType(.cTList(t2), 3)
-        let list3 = Type.tType(.cTList(t1), 1)
+        let list1 = Type.default(.list(t1), 3)
+        let list2 = Type.default(.list(t2), 3)
+        let list3 = Type.default(.list(t1), 1)
         
         XCTAssertTrue(list1 == list1)
         XCTAssertTrue(list1 != list2)
@@ -86,12 +86,12 @@ class TypeEqualityTests: XCTestCase {
     
     func testGenericTypeEquality() {
         let ident = Ident("Test")
-        let g1 = Type.tTypeExponential(.cTBase(.int))
-        let g2 = Type.tTypeExponential(.cTBase(.unit))
+        let g1 = Type.exponential(.base(.int))
+        let g2 = Type.exponential(.base(.unit))
         
-        let t1 = Type.tTypeExponential(.cTNamed(ident, .genericsNone))
-        let t2 = Type.tTypeExponential(.cTNamed(ident, .genericsType(g1)))
-        let t3 = Type.tTypeExponential(.cTNamed(ident, .genericsType(g2)))
+        let t1 = Type.exponential(.named(ident, .none))
+        let t2 = Type.exponential(.named(ident, .type(g1)))
+        let t3 = Type.exponential(.named(ident, .type(g2)))
         
         XCTAssertTrue(t1 == t1)
         XCTAssertTrue(t2 == t2)
@@ -105,14 +105,14 @@ class TypeEqualityTests: XCTestCase {
     }
     
     func testFunctionTypeEquality() {
-        let arg1 = Type.tTypeExponential(.cTBase(.int))
-        let arg2 = Type.tTypeExponential(.cTMulPair(arg1, arg1))
+        let arg1 = Type.exponential(.base(.int))
+        let arg2 = Type.exponential(.mulPair(arg1, arg1))
         
-        let function1 = Type.tTypeExponential(.cTFunction([arg1, arg2], arg1))
-        let function2 = Type.tTypeExponential(.cTFunction([.tTypeExponential(.cTMulPair(arg1, arg2))], arg1))
-        let function3 = Type.tTypeExponential(.cTFunction([arg2], arg1))
-        let function4 = Type.tTypeExponential(.cTFunction([], arg1))
-        let function5 = Type.tTypeExponential(.cTFunction([function1, function2, function3], function4))
+        let function1 = Type.exponential(.function([arg1, arg2], arg1))
+        let function2 = Type.exponential(.function([.exponential(.mulPair(arg1, arg2))], arg1))
+        let function3 = Type.exponential(.function([arg2], arg1))
+        let function4 = Type.exponential(.function([], arg1))
+        let function5 = Type.exponential(.function([function1, function2, function3], function4))
         
         XCTAssertTrue(function1 == function1)
         XCTAssertTrue(function2 == function2)

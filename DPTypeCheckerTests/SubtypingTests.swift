@@ -10,10 +10,10 @@ import XCTest
 
 class SubtypingTests: XCTestCase {
     func testSubtypeReplicationCount() {
-        let coreType = CoreType.cTBase(.int)
-        let subtype = Type.tType(coreType, 1.8)
-        let supertype = Type.tTypeConvenienceInt(coreType, 5)
-        let supersupertype = Type.tTypeExponential(coreType)
+        let coreType = CoreType.base(.int)
+        let subtype = Type.default(coreType, 1.8)
+        let supertype = Type.convenienceInt(coreType, 5)
+        let supersupertype = Type.exponential(coreType)
         
         XCTAssertTrue(subtype.isSubtype(of: subtype))
         XCTAssertTrue(subtype.isSubtype(of: supertype))
@@ -29,23 +29,23 @@ class SubtypingTests: XCTestCase {
     }
     
     func testBasicSubtypes() {
-        let subType = Type.tType(.cTBase(.int), 1)
-        let superType = Type.tType(.cTBase(.int), 1.5)
+        let subType = Type.default(.base(.int), 1)
+        let superType = Type.default(.base(.int), 1.5)
         
-        let pair1 = Type.tType(.cTMulPair(subType, superType), 1)
-        let pair2 = Type.tType(.cTMulPair(superType, superType), 2)
+        let pair1 = Type.default(.mulPair(subType, superType), 1)
+        let pair2 = Type.default(.mulPair(superType, superType), 2)
         XCTAssertTrue(pair1.isSubtype(of: pair1))
         XCTAssertTrue(pair1.isSubtype(of: pair2))
         XCTAssertFalse(pair2.isSubtype(of: pair1))
         
-        let sum1 = Type.tType(.cTSum(subType, superType), 1)
-        let sum2 = Type.tType(.cTSum(superType, superType), 2)
+        let sum1 = Type.default(.sum(subType, superType), 1)
+        let sum2 = Type.default(.sum(superType, superType), 2)
         XCTAssertTrue(sum1.isSubtype(of: sum1))
         XCTAssertTrue(sum1.isSubtype(of: sum2))
         XCTAssertFalse(sum2.isSubtype(of: sum1))
         
-        let list1 = Type.tType(.cTList(subType), 1)
-        let list2 = Type.tType(.cTList(superType), 2)
+        let list1 = Type.default(.list(subType), 1)
+        let list2 = Type.default(.list(superType), 2)
         XCTAssertTrue(list1.isSubtype(of: list1))
         XCTAssertTrue(list1.isSubtype(of: list2))
         XCTAssertTrue(list1.isSubtype(of: list1))
@@ -59,13 +59,13 @@ class SubtypingTests: XCTestCase {
     }
     
     func testGenericTypesSubtyping() {
-        let subType = Type.tType(.cTBase(.int), 1)
-        let superType = Type.tType(.cTBase(.int), 1.5)
+        let subType = Type.default(.base(.int), 1)
+        let superType = Type.default(.base(.int), 1.5)
         let ident = Ident("Test")
         
-        let named1 = Type.tType(.cTNamed(ident, .genericsNone), 1)
-        let named2 = Type.tType(.cTNamed(ident, .genericsType(subType)), 1)
-        let named3 = Type.tType(.cTNamed(ident, .genericsType(superType)), 2)
+        let named1 = Type.default(.named(ident, .none), 1)
+        let named2 = Type.default(.named(ident, .type(subType)), 1)
+        let named3 = Type.default(.named(ident, .type(superType)), 2)
         
         XCTAssertTrue(named1.isSubtype(of: named1))
         XCTAssertFalse(named1.isSubtype(of: named2))
@@ -83,16 +83,16 @@ class SubtypingTests: XCTestCase {
     }
     
     func testFunctionSubtyping() {
-        let sub1 = Type.tType(.cTBase(.int), 1)
-        let sub2 = Type.tType(.cTMulPair(sub1, sub1), 4)
+        let sub1 = Type.default(.base(.int), 1)
+        let sub2 = Type.default(.mulPair(sub1, sub1), 4)
         
-        let super1 = Type.tType(.cTBase(.int), 10)
-        let super2 = Type.tType(.cTMulPair(super1, super1), 5)
+        let super1 = Type.default(.base(.int), 10)
+        let super2 = Type.default(.mulPair(super1, super1), 5)
         
-        let f1 = Type.tTypeExponential(.cTFunction([sub1, sub2], sub1))
-        let f2 = Type.tTypeExponential(.cTFunction([sub1, sub2], super1))
-        let f3 = Type.tTypeExponential(.cTFunction([super1, super2], sub1))
-        let f4 = Type.tTypeExponential(.cTFunction([super1, super2], super1))
+        let f1 = Type.exponential(.function([sub1, sub2], sub1))
+        let f2 = Type.exponential(.function([sub1, sub2], super1))
+        let f3 = Type.exponential(.function([super1, super2], sub1))
+        let f4 = Type.exponential(.function([super1, super2], super1))
         
         //functions have inversed subtyping requirements for their arguments
         XCTAssertTrue(f1.isSubtype(of: f1))

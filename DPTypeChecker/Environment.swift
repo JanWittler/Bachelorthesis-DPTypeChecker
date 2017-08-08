@@ -84,13 +84,13 @@ internal struct Environment {
         //the `add_noise` function is present in every environment
         addNoiseId.value : .addNoise,
         //Bool = Unit!inf + Unit!inf
-        boolTypeIdent.value : .typedef(coreType: .cTSum(.tTypeExponential(.cTBase(.unit)), .tTypeExponential(.cTBase(.unit))), containsGenerics: false),
+        boolTypeIdent.value : .typedef(coreType: .sum(.exponential(.base(.unit)), .exponential(.base(.unit))), containsGenerics: false),
         //Optional<τ> = Unit!inf + τ
-        optionalTypeIdent.value : .typedef(coreType: .cTSum(.tTypeExponential(.cTBase(.unit)), .tTypeUnknown), containsGenerics: true),
+        optionalTypeIdent.value : .typedef(coreType: .sum(.exponential(.base(.unit)), .unknown), containsGenerics: true),
         //Read<τ> = () -> Optional<τ>!1
-        readTypeIdent.value : .typedef(coreType: .cTFunction([], .tType(.cTNamed(optionalTypeIdent, .genericsType(.tTypeUnknown)), 1)), containsGenerics: true),
+        readTypeIdent.value : .typedef(coreType: .function([], .default(.named(optionalTypeIdent, .type(.unknown)), 1)), containsGenerics: true),
         //Write<τ> = τ -> Unit!inf
-        writeTypeIdent.value : .typedef(coreType: .cTFunction([.tTypeUnknown], .tTypeExponential(.cTBase(.unit))), containsGenerics: true)
+        writeTypeIdent.value : .typedef(coreType: .function([.unknown], .exponential(.base(.unit))), containsGenerics: true)
     ]
     
     private mutating func addGlobal(_ global: GlobalElement, forId id: String) throws {
@@ -162,7 +162,7 @@ internal struct Environment {
     mutating func addSumType(name id: Ident, types: (Type, Type)) throws {
         try [types.0, types.1].forEach { try $0.validate(inEnvironment: self) }
         
-        let sumType = CoreType.cTSum(types.0, types.1)
+        let sumType = CoreType.sum(types.0, types.1)
         try addGlobal(.typedef(coreType: sumType, containsGenerics: false), forId: id.value)
     }
     
@@ -238,7 +238,7 @@ internal struct Environment {
         guard let global = globals[id.value], case let .typedef(_, containsGenerics) = global else {
             throw TypeCheckerError.typeNotFound(id)
         }
-        return .cTNamed(id, containsGenerics ? .genericsType(.tTypeUnknown) : .genericsNone)
+        return .named(id, containsGenerics ? .type(.unknown) : .none)
     }
     
     /**

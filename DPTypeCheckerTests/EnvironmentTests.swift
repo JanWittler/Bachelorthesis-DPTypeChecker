@@ -62,10 +62,10 @@ class EnvironmentTests: XCTestCase {
         
         var environment = Environment()
         environment.pushContext()
-        XCTAssertNoThrow(try environment.addToCurrentContext(Id("x"), type: .tType(.cTBase(.unit), 1)))
+        XCTAssertNoThrow(try environment.addToCurrentContext(Id("x"), type: .default(.base(.unit), 1)))
         
         environment.pushContext()
-        XCTAssertNoThrow(try environment.addToCurrentContext(Id("x"), type: .tType(.cTBase(.unit), 2)))
+        XCTAssertNoThrow(try environment.addToCurrentContext(Id("x"), type: .default(.base(.unit), 2)))
         XCTAssertNoThrow(try environment.applyDelta(delta))
         XCTAssertNoThrow(try environment.applyDelta(delta))
         //increasing the usage count three times by 1 breaks the allowed access limit

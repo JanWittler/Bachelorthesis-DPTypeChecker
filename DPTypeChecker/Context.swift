@@ -61,7 +61,7 @@ internal struct Context {
      */
     func lookup(_ id: Id) throws -> Type {
         if let type = values[id]?.0 {
-            if type == .tTypeUnknown {
+            if type == .unknown {
                 throw TypeCheckerError.accessToVariableWithUnknownType(id)
             }
             return type

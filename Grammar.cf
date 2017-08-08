@@ -1,26 +1,26 @@
-PDefs.   Program ::= [Def] ;
+ProgramDefs.   Program ::= [Def] ;
 terminator Def "" ;
 
-DFun.        Def ::= "func" Id "(" [Arg] ")" "->" Type "{" [Stm] "}" ;
-DFunExposed. Def ::= "exposed" "func" Id "(" [Arg] ")" "->" Type "{" [Stm] "}" ;
-DTypedef.	 Def ::= "typedef" Ident "=" "union" Type "|" Type ;
+DefFun.        Def ::= "func" Id "(" [Arg] ")" "->" Type "{" [Stm] "}" ;
+DefFunExposed. Def ::= "exposed" "func" Id "(" [Arg] ")" "->" Type "{" [Stm] "}" ;
+DefTypedef.	   Def ::= "typedef" Ident "=" "union" Type "|" Type ;
 
 separator  Arg "," ;
 terminator Stm "" ;
 
-ADecl.     Arg ::= Id ":" Type ;
+ArgDecl.     Arg ::= Id ":" Type ;
 
-SInit.     Stm ::= "let" IdMaybeTyped "=" Exp ;
-SSplit.    Stm ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" Exp ;
-SIfElse.   Stm ::= "if" "(" IfCond ")" "{" [Stm] "}" Else ;
-SReturn.   Stm ::= "return" Exp ;
-SAssert.   Stm ::= Assertion ;
+StmInit.     Stm ::= "let" IdMaybeTyped "=" Exp ;
+StmSplit.    Stm ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" Exp ;
+StmIfElse.   Stm ::= "if" "(" IfCond ")" "{" [Stm] "}" Else ;
+StmReturn.   Stm ::= "return" Exp ;
+StmAssert.   Stm ::= Assertion ;
 
-IdNotTyped. IdMaybeTyped ::= Id ;
-IdTyped.    IdMaybeTyped ::= Id ":" Type ;
+IdMaybeTypedNotTyped. IdMaybeTyped ::= Id ;
+IdMaybeTypedTyped.    IdMaybeTyped ::= Id ":" Type ;
 
-IfCondCase. IfCond ::= "case" "let" IdMaybeTyped "=" Case Exp ;
-IfCondBool. IfCond ::= Exp ; 
+IfCondCase.   IfCond ::= "case" "let" IdMaybeTyped "=" Case Exp ;
+IfCondBool.   IfCond ::= Exp ; 
 IfCondUnfold. IfCond ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" "unfold" Exp ;
 
 ElseNone. Else ::= ;
@@ -28,51 +28,51 @@ ElseStms. Else ::= "else" "{" [Stm] "}" ;
 
 rules Case ::= "inl" | "inr" ;
 
-EInt.    Exp15 ::= Integer ;
-EFloat.  Exp15 ::= Double ;
-EUnit.   Exp15 ::= "(" ")" ;
-ETrue.   Exp15 ::= "true" ;
-EFalse.  Exp15 ::= "false" ;
-EOption. Exp15 ::= "Just" "(" Exp ")" ;
-ENothing.Exp15 ::= "Nothing" ;
-EId.     Exp15 ::= Id ;
-EPair.   Exp15 ::= "(" Exp "," Exp ")" ;
-ESum.    Exp15 ::= Ident "." Case "(" Exp ")" ;
-EList.   Exp15 ::= "[" [Exp] "]" ;
-ERef.    Exp15 ::= "ref" "<" Type ">" "(" ")" ;
+ExpInt.    Exp15 ::= Integer ;
+ExpFloat.  Exp15 ::= Double ;
+ExpUnit.   Exp15 ::= "(" ")" ;
+ExpTrue.   Exp15 ::= "true" ;
+ExpFalse.  Exp15 ::= "false" ;
+ExpOption. Exp15 ::= "Just" "(" Exp ")" ;
+ExpNothing.Exp15 ::= "Nothing" ;
+ExpId.     Exp15 ::= Id ;
+ExpPair.   Exp15 ::= "(" Exp "," Exp ")" ;
+ExpSum.    Exp15 ::= Ident "." Case "(" Exp ")" ;
+ExpList.   Exp15 ::= "[" [Exp] "]" ;
+ExpRef.    Exp15 ::= "ref" "<" Type ">" "(" ")" ;
 
-EApp.    Exp15 ::= Id "(" [Exp] ")" ;
+ExpApp.    Exp15 ::= Id "(" [Exp] ")" ;
 
-ENegative. Exp14 ::= "-" Exp13 ;
-ENot.      Exp13 ::= "!"  Exp14 ;
+ExpNegative. Exp14 ::= "-" Exp13 ;
+ExpNot.      Exp13 ::= "!"  Exp14 ;
 
-ETimes.  Exp12 ::= Exp12 "*"  Exp13 ;
-EPlus.   Exp11 ::= Exp11 "+"  Exp12 ;
-EMinus.  Exp11 ::= Exp11 "-"  Exp12 ;
+ExpTimes.  Exp12 ::= Exp12 "*"  Exp13 ;
+ExpPlus.   Exp11 ::= Exp11 "+"  Exp12 ;
+ExpMinus.  Exp11 ::= Exp11 "-"  Exp12 ;
 
-ELt.     Exp9  ::= Exp9  "<"  Exp10 ;
-EGt.     Exp9  ::= Exp9  ">"  Exp10 ;
-ELtEq.   Exp9  ::= Exp9  "<=" Exp10 ;
-EGtEq.   Exp9  ::= Exp9  ">=" Exp10 ;
+ExpLt.     Exp9  ::= Exp9  "<"  Exp10 ;
+ExpGt.     Exp9  ::= Exp9  ">"  Exp10 ;
+ExpLtEq.   Exp9  ::= Exp9  "<=" Exp10 ;
+ExpGtEq.   Exp9  ::= Exp9  ">=" Exp10 ;
 
-EEq.     Exp8  ::= Exp8  "==" Exp9 ;
-ENeq.    Exp8  ::= Exp8  "!=" Exp9 ;
+ExpEq.     Exp8  ::= Exp8  "==" Exp9 ;
+ExpNeq.    Exp8  ::= Exp8  "!=" Exp9 ;
 
 separator Exp "," ;
 coercions Exp 15 ;
 
-ATypeEqual. Assertion ::= "assertTypeEqual" "(" Id "," Type ")" ;
+AssertionTypeEqual. Assertion ::= "assertTypeEqual" "(" Id "," Type ")" ;
 
-TType. 				 Type ::= CoreType "!" Double ;
-TTypeExponential.  	 Type ::= CoreType "!" "inf" ;
-TTypeConvenienceInt. Type ::= CoreType "!" Integer ;
+TypeDefault. 		Type ::= CoreType "!" Double ;
+TypeExponential.  	Type ::= CoreType "!" "inf" ;
+TypeConvenienceInt. Type ::= CoreType "!" Integer ;
 
-CTBase.    CoreType ::= BaseType ;
-CTMulPair. CoreType ::= "(" Type "," Type ")" ;
-CTSum.     CoreType ::= "(" Type "+" Type ")" ;
-CTList.    CoreType ::= "[" Type "]" ;
-CTNamed.   CoreType ::= Ident Generics;
-CTFunction.CoreType ::= "(" "(" [Type] ")" "->" Type ")" ;
+CoreTypeBase.    CoreType ::= BaseType ;
+CoreTypeMulPair. CoreType ::= "(" Type "," Type ")" ;
+CoreTypeSum.     CoreType ::= "(" Type "+" Type ")" ;
+CoreTypeList.    CoreType ::= "[" Type "]" ;
+CoreTypeNamed.   CoreType ::= Ident Generics;
+CoreTypeFunction.CoreType ::= "(" "(" [Type] ")" "->" Type ")" ;
 
 GenericsNone. Generics ::= ;
 GenericsType. Generics ::= "<" Type ">" ;
