@@ -210,8 +210,8 @@
 				2A5DB9181F30CB2C003FBB65 /* Context.swift */,
 				2A9BA96A1EE802AA00BE2F00 /* AbstractSyntax.swift */,
 				2A74E7F31EE9D71800C4D566 /* AbSyn+Extensions.swift */,
-				2AA139581EEAAC2800389C66 /* Parser.swift */,
 				2A5DB9151F30CA52003FBB65 /* TypeCheckerError.swift */,
+				2AA139581EEAAC2800389C66 /* Parser.swift */,
 			);
 			path = DPTypeChecker;
 			sourceTree = "<group>";
