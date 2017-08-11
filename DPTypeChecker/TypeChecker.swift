@@ -119,8 +119,8 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
         //fix unknown types and get scaling factor for each pair element
         let fixedTypesAndFactors = try [(type1, idMaybeTyped1), (type2, idMaybeTyped2)].map { (type, idMaybeTyped) -> (Type, Double) in
             if let requiredType = idMaybeTyped.type {
-                //use the core type of the required type to solve for `unknown` types but keep the old replication count since this gets recomputed when variable is added to environment
-                let resultType = Type.default(requiredType.coreType, type.replicationCount)
+                //use the core type of the required type to solve for `unknown` types but keep the old replication index since this gets recomputed when variable is added to environment
+                let resultType = Type.default(requiredType.coreType, type.replicationIndex)
                 guard let factor = type.scalingFactorToConvertToType(requiredType) else {
                     throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: requiredType)
                 }
@@ -140,8 +140,8 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
         try environment.applyDelta(envDelta)
         let id1 = idMaybeTyped1.id
         let id2 = idMaybeTyped2.id
-        try environment.addToCurrentContext(id1, type: .default(type1.coreType, type1.replicationCount * maxFactor))
-        try environment.addToCurrentContext(id2, type: .default(type2.coreType, type2.replicationCount * maxFactor))
+        try environment.addToCurrentContext(id1, type: .default(type1.coreType, type1.replicationIndex * maxFactor))
+        try environment.addToCurrentContext(id2, type: .default(type2.coreType, type2.replicationIndex * maxFactor))
         
     case let .ifElse(condition, ifStms, `else`):
         if let elseStms = `else`.stms {
@@ -225,7 +225,7 @@ private func inferType(_ exp: Exp, requiresOPPType: Bool = false) throws -> (Typ
         var delta = typesAndDeltas.reduce(Environment.Delta()) { $0.merge(with: $1.1) }
         if var elementType = types.first {
             try types.forEach {
-                //subtype all elements to the type with the least replication count
+                //subtype all elements to the type with the least replication index
                 if $0.isSubtype(of: elementType) {
                     elementType = $0
                 }
@@ -394,8 +394,8 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
         //fix unknown types and get scaling factor for each pair element
         let fixedTypesAndFactors = try [(elemType, headIdMaybeTyped), (listType, tailIdMaybeTyped)].map { (type, idMaybeTyped) -> (Type, Double) in
             if let requiredType = idMaybeTyped.type {
-                //use the core type of the required type to solve for `unknown` types but keep the old replication count since this gets recomputed when variable is added to environment
-                let resultType = Type.default(requiredType.coreType, type.replicationCount)
+                //use the core type of the required type to solve for `unknown` types but keep the old replication index since this gets recomputed when variable is added to environment
+                let resultType = Type.default(requiredType.coreType, type.replicationIndex)
                 guard let factor = type.scalingFactorToConvertToType(requiredType) else {
                     throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: requiredType)
                 }
@@ -415,8 +415,8 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
         try environment.applyDelta(delta)
         let head = headIdMaybeTyped.id
         let tail = tailIdMaybeTyped.id
-        try environment.addToCurrentContext(head, type: .default(elemType.coreType, elemType.replicationCount * maxFactor))
-        try environment.addToCurrentContext(tail, type: .default(listType.coreType, listType.replicationCount * maxFactor))
+        try environment.addToCurrentContext(head, type: .default(elemType.coreType, elemType.replicationIndex * maxFactor))
+        try environment.addToCurrentContext(tail, type: .default(listType.coreType, listType.replicationIndex * maxFactor))
     }
 }
 
@@ -432,7 +432,7 @@ private func handleAddNoise(_ exps: [Exp]) throws -> Type {
     guard case let .base(baseType) = expType.coreType, allowedBaseTypes.contains(baseType) else {
         throw TypeCheckerError.addNoiseFailed(message: "invalid type for adding noise to\ntype: \(expType)\nin expression: \(exp)")
     }
-    guard expType.replicationCount < Double.infinity else {
+    guard expType.replicationIndex < Double.infinity else {
         throw TypeCheckerError.addNoiseFailed(message: "adding noise to an exponential type would result in an unusable result and is therefore forbidden")
     }
     return .exponential(expType.coreType)
@@ -444,11 +444,11 @@ private func handleAdditionOrSubtraction(_ e1: Exp, _ e2: Exp, originalExpressio
     let allowedCoreTypes: [CoreType] = [
         .base(.int),
         .base(.float)
-    ] //replication count is always 1
+    ] //replication index is always 1
     if allowedCoreTypes.contains(type1.coreType) && type1.coreType == type2.coreType {
-        //instead of subtyping to replication count 1, rather subtype only so far that type1 and type2 match
-        let lowerReplicationCount = min(type1.replicationCount, type2.replicationCount)
-        let resultType = Type.default(type1.coreType, lowerReplicationCount)
+        //instead of subtyping to replication index 1, rather subtype only so far that type1 and type2 match
+        let lowerreplicationIndex = min(type1.replicationIndex, type2.replicationIndex)
+        let resultType = Type.default(type1.coreType, lowerreplicationIndex)
         return (resultType, delta1.merge(with: delta2))
     }
     throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
@@ -484,11 +484,11 @@ private func handleMultiplication(_ e1: Exp, _ e2: Exp, originalExpression exp: 
         //check if both types are exponential or can be scaled up to that
         do {
             var environmentCopy = environment
-            if type1.replicationCount < .infinity {
+            if type1.replicationIndex < .infinity {
                 delta1.scale(by: .infinity)
                 try environmentCopy.applyDelta(delta1)
             }
-            if type2.replicationCount < .infinity {
+            if type2.replicationIndex < .infinity {
                 delta2.scale(by: .infinity)
                 try environmentCopy.applyDelta(delta2)
             }
@@ -520,11 +520,11 @@ private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp)
     if allowedCoreTypes.contains(type1.coreType) && type1.coreType == type2.coreType {
         do {
             var environmentCopy = environment
-            if type1.replicationCount != .infinity {
+            if type1.replicationIndex != .infinity {
                 delta1.scale(by: .infinity)
                 try environmentCopy.applyDelta(delta1)
             }
-            if type2.replicationCount != .infinity {
+            if type2.replicationIndex != .infinity {
                 delta2.scale(by: .infinity)
                 try environmentCopy.applyDelta(delta2)
             }
@@ -561,12 +561,12 @@ private func checkAssertion(_ assertion: Assertion) throws {
         let idType = try environment.lookup(id)
         let usageCount = try environment.lookupUsageCount(id)
         let updatedType: Type
-        if idType.replicationCount == Double.infinity {
+        if idType.replicationIndex == Double.infinity {
             //exponential types will always be exponentials, independent of usage count
             updatedType = idType
         }
         else {
-            updatedType = Type.default(idType.coreType, idType.replicationCount - usageCount)
+            updatedType = Type.default(idType.coreType, idType.replicationIndex - usageCount)
         }
         guard updatedType == type else {
             let errorMessage = "variable `\(id.value)` does not match type\n" +

@@ -54,7 +54,7 @@ internal struct Environment {
          - factor: The factor to scale by. This value must be greater or equal than `1`.
          */
         mutating func scale(by factor: Double) {
-            precondition(factor >= 1, "scaling to lower count invalid")
+            precondition(factor >= 1, "scaling to lower usage count invalid")
             changes = changes.reduce([Id : Double]()) {
                 var dict = $0
                 let (key, value) = $1
@@ -242,7 +242,7 @@ internal struct Environment {
     }
     
     /**
-     Looks up the usage count of the variable with the given id in the `contexts` stack, starting with the topmost one. The usage count is the number of times the variable was accessed yet and must not be greater than the replication count of the variable's type. If there are multiple contexts containing a variable with the given id, the usage count stored in the topmost context, which contains the variable, is returned.
+     Looks up the usage count of the variable with the given id in the `contexts` stack, starting with the topmost one. The usage count is the number of times the variable was accessed yet and must not be greater than the replication index of the variable's type. If there are multiple contexts containing a variable with the given id, the usage count stored in the topmost context, which contains the variable, is returned.
      - parameters:
      - id: The id of the variable to search for.
      - returns: The usage count of the variable.
@@ -265,7 +265,7 @@ internal struct Environment {
      Applies the given delta to the environment. Every change in the `Delta`-instance is applied to the environment by updating the usage count of the variable in the topmost context which contains that variable.
      - parameters:
      - delta: The delta to apply.
-     - throws: Throws a `TypeCheckerError.variableNotFound` error if a variable in the `Delta`-instance could not be found in the environment's contexts. Throws a `TypeCheckerError.invalidVariableAccess` if the usage count for some variable after applying the delta is greater than the variable's type replication count.
+     - throws: Throws a `TypeCheckerError.variableNotFound` error if a variable in the `Delta`-instance could not be found in the environment's contexts. Throws a `TypeCheckerError.invalidVariableAccess` if the usage count for some variable after applying the delta is greater than the variable's type replication index.
      */
     mutating func applyDelta(_ delta: Delta) throws {
         try delta.changes.forEach {

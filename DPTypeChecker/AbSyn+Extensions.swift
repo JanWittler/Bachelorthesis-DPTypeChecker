@@ -11,7 +11,7 @@ import Foundation
 //MARK: custom accessors
 
 extension Type {
-    var replicationCount: Double {
+    var replicationIndex: Double {
         switch self {
         case let .default(_, rCount):
             return rCount
@@ -111,7 +111,7 @@ extension Case {
         guard case let .sum(lType, rType) = type.coreType else {
             if case let .named(id, generics) = type.coreType {
                 do {
-                    var type = Type.default(try environment.typeDefinitionOfCoreType(with: id), type.replicationCount)
+                    var type = Type.default(try environment.typeDefinitionOfCoreType(with: id), type.replicationIndex)
                     if let annotatedType = generics.annotatedType {
                         type = type.replaceAllGenericTypes(with: annotatedType)
                     }
@@ -136,14 +136,14 @@ extension Case {
 
 extension Type {
     /**
-     Checks whether `self` is a subtype of the given type. A type is a subtype of another if the replication count is less or equal to the other replication count, the core types match and their respective types are subtypes of their matching counterpart too. A type is always subtype of itself.
+     Checks whether `self` is a subtype of the given type. A type is a subtype of another if the replication index is less or equal to the other replication index, the core types match and their respective types are subtypes of their matching counterpart too. A type is always subtype of itself.
      - parameters:
        - other: The supertype to check for.
      - returns: `true` if `self` is a subtype of `other`, otherwise `false`.
      */
     func isSubtype(of other: Type) -> Bool {
-        //if the own count is larger than the compared count, we can alwas return `false`, no matter of the internal types
-        guard replicationCount <= other.replicationCount else {
+        //if the own index is larger than the compared index, we can alwas return `false`, no matter of the internal types
+        guard replicationIndex <= other.replicationIndex else {
             return false
         }
         switch (self.coreType, other.coreType) {
@@ -187,11 +187,11 @@ extension Type {
             return 1
         }
         else if coreType == requiredType.coreType {
-            return max(1, requiredType.replicationCount / replicationCount)
+            return max(1, requiredType.replicationIndex / replicationIndex)
         }
         //check if `self` contains an unknown type which can be converted to match `requiredType`
         else if canBeConverted(to: requiredType) {
-            return Type.default(requiredType.coreType, replicationCount).scalingFactorToConvertToType(requiredType)
+            return Type.default(requiredType.coreType, replicationIndex).scalingFactorToConvertToType(requiredType)
         }
         return nil
     }
@@ -207,7 +207,7 @@ extension Type {
      - returns: Returns `true` if the current type can be converted to the given type, otherwise `false`.
      */
     fileprivate func canBeConverted(to requiredType: Type) -> Bool {
-        //use recursion on an internal closure to be able to do not check replication count only in first recursion. This is allowed because topmost replication count can be adjusted using scaling
+        //use recursion on an internal closure to be able to do not check replication index only in first recursion. This is allowed because topmost replication index can be adjusted using scaling
         var internalCanBeConverted: ((Type, Type, Bool) -> Bool)!
         internalCanBeConverted = {
             //if own type is unknown it can become any type
@@ -215,8 +215,8 @@ extension Type {
                 return true
             }
             
-            //either first stage where replication count can be ignored or `type`'s replication count is greater than `requiredType`'s replication count thus it can be subtyped to `requiredType`
-            guard $2 || $0.replicationCount >= $1.replicationCount else {
+            //either first stage where replication index can be ignored or `type`'s replication index is greater than `requiredType`'s replication index thus it can be subtyped to `requiredType`
+            guard $2 || $0.replicationIndex >= $1.replicationIndex else {
                 return false
             }
             
@@ -281,7 +281,7 @@ extension Type {
         case .unknown:
             return type
         }
-        return .default(newCoreType,replicationCount)
+        return .default(newCoreType,replicationIndex)
     }
     
     /**
@@ -340,19 +340,19 @@ extension CoreType {
 
 extension Type {
     /**
-     Indicates if the type instance is an opponent type in the given environment. An opponent type is a type where all replication counts have value infinity.
+     Indicates if the type instance is an opponent type in the given environment. An opponent type is a type where all replication indexs have value infinity.
      - parameters:
        - environment: The environment in which the type resides. Required to enable checking of named types.
      - returns: Returns `true` if the type is an opponent type in the given environment, otherwise `false`.
      */
     func isOPPType(inEnvironment environment: Environment) -> Bool {
-        return replicationCount == Double.infinity && coreType.isOPPType(inEnvironment: environment)
+        return replicationIndex == Double.infinity && coreType.isOPPType(inEnvironment: environment)
     }
 }
 
 private extension CoreType {
     /**
-     Indicates if the core type instance is an opponent type, assuming its belonging type has a replication count of infinity. All base types are opponent types by design, composed core types are opponent types if their contained types are opponent types.
+     Indicates if the core type instance is an opponent type, assuming its belonging type has a replication index of infinity. All base types are opponent types by design, composed core types are opponent types if their contained types are opponent types.
      - parameters:
        - environment: The environment in which the core type resides. Required to enable checking of named types.
      - returns: Returns `true` if the core type is an opponent type in the given environment, otherwise `false`.
@@ -391,7 +391,7 @@ private extension CoreType {
 
 extension Type: Equatable {
     public static func ==(lhs: Type, rhs: Type) -> Bool {
-        return lhs.replicationCount == rhs.replicationCount && lhs.coreType == rhs.coreType
+        return lhs.replicationIndex == rhs.replicationIndex && lhs.coreType == rhs.coreType
     }
 }
 
@@ -439,7 +439,7 @@ extension Type: CustomStringConvertible {
     }
     
     fileprivate var internalDescription: String {
-        let countString = replicationCount.remainder(dividingBy: 1) == 0 ? String(format: "%.0f", replicationCount) : "\(replicationCount)"
+        let countString = replicationIndex.remainder(dividingBy: 1) == 0 ? String(format: "%.0f", replicationIndex) : "\(replicationIndex)"
         return "\(coreType)!\(countString)"
     }
 }

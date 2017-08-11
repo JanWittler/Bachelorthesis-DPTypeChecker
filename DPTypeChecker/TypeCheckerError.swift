@@ -62,7 +62,7 @@ extension TypeCheckerError: CustomStringConvertible {
             return "tried to access an variable with unknown type which is invalid. Unknown types occur when generic elements are created with not enough information, e.g. an empty list without type annotation" + "\n" +
             "variable id: \(id)"
         case let .invalidVariableAccess(id):
-            return "access to variable `\(id.value)` led to replication count less than zero"
+            return "access to variable `\(id.value)` led to replication index less than zero"
         case let .assignmentFailed(stm, actual, expected):
             return "assignment failed in statement" + "\n" +
                 "statement: " + stm.show() + "\n" +

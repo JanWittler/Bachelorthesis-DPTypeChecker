@@ -9,7 +9,7 @@
 import XCTest
 
 class SubtypingTests: XCTestCase {
-    func testSubtypeReplicationCount() {
+    func testSubtypereplicationIndex() {
         let coreType = CoreType.base(.int)
         let subtype = Type.default(coreType, 1.8)
         let supertype = Type.convenienceInt(coreType, 5)
