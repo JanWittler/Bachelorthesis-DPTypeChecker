@@ -37,7 +37,7 @@ ExpOption. Exp15 ::= "Just" "(" Exp ")" ;
 ExpNothing.Exp15 ::= "Nothing" ;
 ExpId.     Exp15 ::= Id ;
 ExpPair.   Exp15 ::= "(" Exp "," Exp ")" ;
-ExpSum.    Exp15 ::= Ident "." Case "(" Exp ")" ;
+ExpSum.    Exp15 ::= Ident "(" Case ":" Exp ")" ;
 ExpList.   Exp15 ::= "[" [Exp] "]" ;
 ExpRef.    Exp15 ::= "ref" "<" Type ">" "(" ")" ;
 

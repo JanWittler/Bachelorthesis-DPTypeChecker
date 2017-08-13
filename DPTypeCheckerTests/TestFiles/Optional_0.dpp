@@ -1,6 +1,6 @@
 //optionals
 
-typedef Sum = union Int!inf | Unit!inf
+typedef Sum = union Unit!inf | Int!inf
 
 func helper(x: Int!1, y: Int!1) -> Int!1 {
     return x + y
@@ -9,7 +9,7 @@ func helper(x: Int!1, y: Int!1) -> Int!1 {
 func testOptional_0() -> Unit!1 {
     let a = Just(1)
     let b = Just((2.0, ()))
-    let c = Just(Sum.inl(10))
+    let c = Just(Sum(inr: 10))
     let d = Just([false, true, false])
     let e = Just(helper(5))
     let f: Optional<Bool!1>!7 = Just(false)

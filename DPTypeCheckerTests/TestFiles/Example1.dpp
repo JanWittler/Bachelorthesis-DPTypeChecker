@@ -4,7 +4,7 @@
 typedef SKey = union Unit!inf | Unit!inf
 
 func mkSKey() -> SKey!inf {
-    return SKey.inl(())
+    return SKey(inl: ())
 }
 
 func senc(key: SKey!1, value: Int!1) -> Int!inf {

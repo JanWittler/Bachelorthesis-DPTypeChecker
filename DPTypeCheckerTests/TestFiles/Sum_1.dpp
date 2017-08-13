@@ -3,7 +3,7 @@
 typedef Test = union Int!inf | Unit!inf
 
 func testSum_1(x: Int!inf) -> Test!1 {
-	let test = Test.inl(x)
+    let test = Test(inl: x)
 	assertTypeEqual(x, Int!inf)
 	return test
 }
