@@ -441,15 +441,28 @@ private func handleAddNoise(_ exps: [Exp]) throws -> Type {
 private func handleAdditionOrSubtraction(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp) throws -> (Type, Environment.Delta) {
     let (type1, delta1) = try inferType(e1)
     let (type2, delta2) = try inferType(e2)
+    let delta = delta1.merge(with: delta2)
+    //instead of subtyping to replication index 1, rather subtype only so far that type1 and type2 match
+    let lowerReplicationIndex = min(type1.replicationIndex, type2.replicationIndex)
+    
     let allowedCoreTypes: [CoreType] = [
         .base(.int),
         .base(.float)
     ] //replication index is always 1
     if allowedCoreTypes.contains(type1.coreType) && type1.coreType == type2.coreType {
-        //instead of subtyping to replication index 1, rather subtype only so far that type1 and type2 match
-        let lowerreplicationIndex = min(type1.replicationIndex, type2.replicationIndex)
-        let resultType = Type.default(type1.coreType, lowerreplicationIndex)
-        return (resultType, delta1.merge(with: delta2))
+        let resultType = Type.default(type1.coreType, lowerReplicationIndex)
+        return (resultType, delta)
+    }
+    
+    //allow list addition
+    if case .plus = exp, case let .list(elem1) = type1.coreType, case let .list(elem2) = type2.coreType {
+        //take the element type that matches both lists, i.e. the subtype one to match the other if possible
+        if elem1.isSubtype(of: elem2) {
+            return (.default(.list(elem1), lowerReplicationIndex), delta)
+        }
+        else if elem2.isSubtype(of: elem1) {
+            return (.default(.list(elem2), lowerReplicationIndex), delta)
+        }
     }
     throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
 }
