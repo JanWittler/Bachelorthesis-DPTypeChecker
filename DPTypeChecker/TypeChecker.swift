@@ -103,7 +103,7 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
     
     switch stm {
     case let .init(idMaybeTyped, exp):
-        var (expType, envDelta) = try inferType(exp)
+        var (expType, envDelta) = try inferType(exp, requiresOPPType: false)
         if let requiredType = idMaybeTyped.type {
             try makeType(&expType, matchRequiredType: requiredType, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: expType, expected: requiredType))
         }
@@ -111,7 +111,7 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
         try environment.addToCurrentContext(idMaybeTyped.id, type: expType)
         
     case let .split(idMaybeTyped1, idMaybeTyped2, exp):
-        var (expType, envDelta) = try inferType(exp)
+        var (expType, envDelta) = try inferType(exp, requiresOPPType: false)
         guard case var .mulPair(type1, type2) = expType.coreType else {
             throw TypeCheckerError.splitFailed(stm: stm, actual: expType)
         }
@@ -172,7 +172,7 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
     try checkStms(followingStatements, functionSignature: functionSignature)
 }
 
-private func inferType(_ exp: Exp, requiresOPPType: Bool = false) throws -> (Type, Environment.Delta) {
+private func inferType(_ exp: Exp, requiresOPPType: Bool) throws -> (Type, Environment.Delta) {
     switch exp {
     case .int:
         return (.default(.base(.int), 1), Environment.Delta())
@@ -339,23 +339,23 @@ private func inferType(_ exp: Exp, requiresOPPType: Bool = false) throws -> (Typ
         }
         throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type])
     case let .times(e1, e2):
-        return try handleMultiplication(e1, e2, originalExpression: exp)
+        return try handleMultiplication(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
     case let .plus(e1, e2):
-        return try handleAdditionOrSubtraction(e1, e2, originalExpression: exp)
+        return try handleAdditionOrSubtraction(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
     case let .minus(e1, e2):
-        return try handleAdditionOrSubtraction(e1, e2, originalExpression: exp)
+        return try handleAdditionOrSubtraction(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
     case let .lt(e1, e2):
-        return try handleComparison(e1, e2, originalExpression: exp)
+        return try handleComparison(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
     case let .gt(e1, e2):
-        return try handleComparison(e1, e2, originalExpression: exp)
+        return try handleComparison(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
     case let .ltEq(e1, e2):
-        return try handleComparison(e1, e2, originalExpression: exp)
+        return try handleComparison(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
     case let .gtEq(e1, e2):
-        return try handleComparison(e1, e2, originalExpression: exp)
+        return try handleComparison(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
     case let .eq(e1, e2):
-        return try handleComparison(e1, e2, originalExpression: exp)
+        return try handleComparison(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
     case let .neq(e1, e2):
-        return try handleComparison(e1, e2, originalExpression: exp)
+        return try handleComparison(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
     }
 }
 
@@ -372,13 +372,13 @@ private func makeType(_ type: inout Type, matchRequiredType requiredType: Type, 
 private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws {
     switch condition {
     case let .bool(exp):
-        let (type, delta) = try inferType(exp)
+        let (type, delta) = try inferType(exp, requiresOPPType: false)
         guard try type.coreType == environment.coreTypeForId(boolTypeIdent) else {
             throw TypeCheckerError.invalidIfCondition(stm: stm, message: "an if condition must be of `Bool` type but was \(type)")
         }
         try environment.applyDelta(delta)
     case let .case(idMaybeTyped, sumCase, exp):
-        var (condType, envDelta) = try inferType(exp)
+        var (condType, envDelta) = try inferType(exp, requiresOPPType: false)
         var unwrappedType = try sumCase.unwrappedType(from: condType, inEnvironment: environment)
         if let requiredType = idMaybeTyped.type {
             try makeType(&unwrappedType, matchRequiredType: requiredType, withDelta: &envDelta, errorForFailure: .assignmentFailed(stm: stm, actual: unwrappedType, expected: requiredType))
@@ -386,7 +386,7 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
         try environment.applyDelta(envDelta)
         try environment.addToCurrentContext(idMaybeTyped.id, type: unwrappedType)
     case let .unfold(headIdMaybeTyped, tailIdMaybeTyped, exp):
-        var (listType, delta) = try inferType(exp)
+        var (listType, delta) = try inferType(exp, requiresOPPType: false)
         guard case var .list(elemType) = listType.coreType else {
             throw TypeCheckerError.invalidIfCondition(stm: stm, message: "conditional unfold must be applied to list type\nactual: \(listType)")
         }
@@ -425,7 +425,7 @@ private func handleAddNoise(_ exps: [Exp]) throws -> Type {
         throw TypeCheckerError.addNoiseFailed(message: "the add_noise construct requires exactly one argument but was provided \(exps.count)\nnamely \(exps)")
     }
     let exp = exps.first!
-    let (expType, delta) = try inferType(exp)
+    let (expType, delta) = try inferType(exp, requiresOPPType: false)
     //apply delta directly, because it must not be scaled after `add_noise` was applied
     try environment.applyDelta(delta)
     let allowedBaseTypes: [BaseType] = [.int]
@@ -438,9 +438,9 @@ private func handleAddNoise(_ exps: [Exp]) throws -> Type {
     return .exponential(expType.coreType)
 }
 
-private func handleAdditionOrSubtraction(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp) throws -> (Type, Environment.Delta) {
-    let (type1, delta1) = try inferType(e1)
-    let (type2, delta2) = try inferType(e2)
+private func handleAdditionOrSubtraction(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp, requiresOPPType: Bool) throws -> (Type, Environment.Delta) {
+    let (type1, delta1) = try inferType(e1, requiresOPPType: requiresOPPType)
+    let (type2, delta2) = try inferType(e2, requiresOPPType: requiresOPPType)
     let delta = delta1.merge(with: delta2)
     //instead of subtyping to replication index 1, rather subtype only so far that type1 and type2 match
     let lowerReplicationIndex = min(type1.replicationIndex, type2.replicationIndex)
@@ -467,9 +467,9 @@ private func handleAdditionOrSubtraction(_ e1: Exp, _ e2: Exp, originalExpressio
     throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
 }
 
-private func handleMultiplication(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp) throws -> (Type, Environment.Delta) {
-    var (type1, delta1) = try inferType(e1)
-    var (type2, delta2) = try inferType(e2)
+private func handleMultiplication(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp, requiresOPPType: Bool) throws -> (Type, Environment.Delta) {
+    var (type1, delta1) = try inferType(e1, requiresOPPType: requiresOPPType)
+    var (type2, delta2) = try inferType(e2, requiresOPPType: requiresOPPType)
     
     let allowedCoreTypes: [CoreType] = [
         .base(.int),
@@ -514,9 +514,9 @@ private func handleMultiplication(_ e1: Exp, _ e2: Exp, originalExpression exp: 
     }
 }
 
-private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp) throws -> (Type, Environment.Delta) {
-    var (type1, delta1) = try inferType(e1)
-    var (type2, delta2) = try inferType(e2)
+private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp, requiresOPPType: Bool) throws -> (Type, Environment.Delta) {
+    var (type1, delta1) = try inferType(e1, requiresOPPType: requiresOPPType)
+    var (type2, delta2) = try inferType(e2, requiresOPPType: requiresOPPType)
     var allowedCoreTypes: [CoreType] = [
         .base(.int),
         .base(.float),
