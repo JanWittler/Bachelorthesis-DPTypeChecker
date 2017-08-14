@@ -1,4 +1,4 @@
-//multiplication
+//multiplication and division
 func testOperators_1() -> Unit!1 {
     let x: Int!3 = 1
     let y = 2 * x
@@ -19,6 +19,16 @@ func testOperators_1() -> Unit!1 {
 
     let f = -3.4 * d
     assertTypeEqual(d, Float!5.6)
+
+    let g: Int!5 = 10
+    let h = g / (2 + 3 * 4 / 5)
+    assertTypeEqual(g, Int!4)
+    assertTypeEqual(h, Int!1)
+
+    let i: Float!inf = 1.0 / 3.0
+    let j = 2.0 / i
+    assertTypeEqual(i, Float!inf)
+    assertTypeEqual(j, Float!inf)
 
     return ()
 }

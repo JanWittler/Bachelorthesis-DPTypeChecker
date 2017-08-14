@@ -339,7 +339,9 @@ private func inferType(_ exp: Exp, requiresOPPType: Bool) throws -> (Type, Envir
         }
         throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type])
     case let .times(e1, e2):
-        return try handleMultiplication(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
+        return try handleMultiplicationOrDivision(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
+    case let .div(e1, e2):
+        return try handleMultiplicationOrDivision(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
     case let .plus(e1, e2):
         return try handleAdditionOrSubtraction(e1, e2, originalExpression: exp, requiresOPPType: requiresOPPType)
     case let .minus(e1, e2):
@@ -467,7 +469,7 @@ private func handleAdditionOrSubtraction(_ e1: Exp, _ e2: Exp, originalExpressio
     throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
 }
 
-private func handleMultiplication(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp, requiresOPPType: Bool) throws -> (Type, Environment.Delta) {
+private func handleMultiplicationOrDivision(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp, requiresOPPType: Bool) throws -> (Type, Environment.Delta) {
     var (type1, delta1) = try inferType(e1, requiresOPPType: requiresOPPType)
     var (type2, delta2) = try inferType(e2, requiresOPPType: requiresOPPType)
     
@@ -486,31 +488,46 @@ private func handleMultiplication(_ e1: Exp, _ e2: Exp, originalExpression exp: 
         delta.scale(by: max(1, abs($2)))
         return ($0, delta)
     }
+    
     //check if it is a multiplication with a constant value
-    if delta1.isEmpty, let value = constantValueFromExpression(e1) {
-        return mulWithConst(type2, delta2, value)
-    }
-    else if delta2.isEmpty, let value = constantValueFromExpression(e2) {
-        return mulWithConst(type1, delta1, value)
-    }
-    else {
-        //check if both types are exponential or can be scaled up to that
-        do {
-            var environmentCopy = environment
-            if type1.replicationIndex < .infinity {
-                delta1.scale(by: .infinity)
-                try environmentCopy.applyDelta(delta1)
-            }
-            if type2.replicationIndex < .infinity {
-                delta2.scale(by: .infinity)
-                try environmentCopy.applyDelta(delta2)
-            }
-            return (.exponential(type1.coreType), delta1.merge(with: delta2))
+    if case .times = exp {
+        if delta1.isEmpty, let value = constantValueFromExpression(e1) {
+            return mulWithConst(type2, delta2, value)
         }
-        catch {
-            //catch scaling error to throw more descriptive arithmetic error instead
-            throw TypeCheckerError.arithmeticError(message: "multiplication must be performed with at least one constant or only exponential types." + "\n" + "expression: \(exp.show())")
+        else if delta2.isEmpty, let value = constantValueFromExpression(e2) {
+            return mulWithConst(type1, delta1, value)
         }
+    }
+    //check if it is a division by a constant value; division by non-exponential non-constant type is not supported
+    if case .div = exp {
+        if delta2.isEmpty, let value = constantValueFromExpression(e2) {
+            return mulWithConst(type1, delta1, 1 / value)
+        }
+    }
+        
+    //check if both types are exponential or can be scaled up to that
+    do {
+        var environmentCopy = environment
+        if type1.replicationIndex < .infinity {
+            delta1.scale(by: .infinity)
+            try environmentCopy.applyDelta(delta1)
+        }
+        if type2.replicationIndex < .infinity {
+            delta2.scale(by: .infinity)
+            try environmentCopy.applyDelta(delta2)
+        }
+        return (.exponential(type1.coreType), delta1.merge(with: delta2))
+    }
+    catch {
+        //catch scaling error to throw more descriptive arithmetic error instead
+        let errorMessage: String
+        if case .div = exp {
+            errorMessage = "division must be performed with either a constant value as the divisor or only exponential types."
+        }
+        else {
+            errorMessage = "multiplication must be performed with at least one constant value or only exponential types."
+        }
+        throw TypeCheckerError.arithmeticError(message: errorMessage + "\n" + "expression: \(exp.show())")
     }
 }
 
@@ -560,6 +577,22 @@ private func constantValueFromExpression(_ exp: Exp) -> Double? {
     case let .negative(e):
         if let value = constantValueFromExpression(e) {
             return -value
+        }
+    case let .times(e1, e2):
+        if let value1 = constantValueFromExpression(e1), let value2 = constantValueFromExpression(e2) {
+            return value1 * value2
+        }
+    case let .div(e1, e2):
+        if let value1 = constantValueFromExpression(e1), let value2 = constantValueFromExpression(e2), value2 != 0 {
+            return value1 / value2
+        }
+    case let .plus(e1, e2):
+        if let value1 = constantValueFromExpression(e1), let value2 = constantValueFromExpression(e2) {
+            return value1 + value2
+        }
+    case let .minus(e1, e2):
+        if let value1 = constantValueFromExpression(e1), let value2 = constantValueFromExpression(e2) {
+            return value1 - value2
         }
     default:
         break

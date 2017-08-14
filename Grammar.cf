@@ -47,6 +47,7 @@ ExpNegative. Exp14 ::= "-" Exp13 ;
 ExpNot.      Exp13 ::= "!"  Exp14 ;
 
 ExpTimes.  Exp12 ::= Exp12 "*"  Exp13 ;
+ExpDiv.	   Exp12 ::= Exp12 "/"  Exp13 ;
 ExpPlus.   Exp11 ::= Exp11 "+"  Exp12 ;
 ExpMinus.  Exp11 ::= Exp11 "-"  Exp12 ;
 
