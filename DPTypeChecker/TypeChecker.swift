@@ -568,6 +568,8 @@ private func constantValueFromExpression(_ exp: Exp) -> Double? {
 }
 
 private func checkAssertion(_ assertion: Assertion) throws {
+    //assertions are only for validation during debugging, not for any modification, thus restore the previous environment after checking the assertion
+    let previousEnvironment = environment
     switch assertion {
     case let .typeEqual(id, type):
         try type.validate(inEnvironment: environment)
@@ -588,4 +590,6 @@ private func checkAssertion(_ assertion: Assertion) throws {
             throw TypeCheckerError.assertionFailed(errorMessage)
         }
     }
+    
+    environment = previousEnvironment
 }
