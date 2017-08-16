@@ -436,7 +436,7 @@ private func handleAddNoise(_ exps: [Exp]) throws -> Type {
     guard case let .base(baseType) = expType.coreType, allowedBaseTypes.contains(baseType) else {
         throw TypeCheckerError.addNoiseFailed(message: "invalid type for adding noise to\ntype: \(expType)\nin expression: \(exp)")
     }
-    guard expType.replicationIndex < Double.infinity else {
+    guard expType.replicationIndex.isFinite else {
         throw TypeCheckerError.addNoiseFailed(message: "adding noise to an exponential type would result in an unusable result and is therefore forbidden")
     }
     return .exponential(expType.coreType)
@@ -510,11 +510,11 @@ private func handleMultiplicationOrDivision(_ e1: Exp, _ e2: Exp, originalExpres
     //check if both types are exponential or can be scaled up to that
     do {
         var environmentCopy = environment
-        if type1.replicationIndex < .infinity {
+        if type1.replicationIndex.isFinite {
             delta1.scale(by: .infinity)
             try environmentCopy.applyDelta(delta1)
         }
-        if type2.replicationIndex < .infinity {
+        if type2.replicationIndex.isFinite {
             delta2.scale(by: .infinity)
             try environmentCopy.applyDelta(delta2)
         }
@@ -552,11 +552,11 @@ private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp,
     if allowedCoreTypes.contains(type1.coreType) && type1.coreType == type2.coreType {
         do {
             var environmentCopy = environment
-            if type1.replicationIndex != .infinity {
+            if type1.replicationIndex.isFinite {
                 delta1.scale(by: .infinity)
                 try environmentCopy.applyDelta(delta1)
             }
-            if type2.replicationIndex != .infinity {
+            if type2.replicationIndex.isFinite {
                 delta2.scale(by: .infinity)
                 try environmentCopy.applyDelta(delta2)
             }
@@ -611,7 +611,7 @@ private func checkAssertion(_ assertion: Assertion) throws {
         let idType = try environment.lookup(id)
         let usageCount = try environment.lookupUsageCount(id)
         let updatedType: Type
-        if idType.replicationIndex == Double.infinity {
+        if idType.replicationIndex.isInfinite {
             //exponential types will always be exponentials, independent of usage count
             updatedType = idType
         }

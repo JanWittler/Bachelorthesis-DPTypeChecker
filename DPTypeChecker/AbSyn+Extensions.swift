@@ -18,7 +18,7 @@ extension Type {
         case let .convenienceInt(_ ,rCount):
             return Double(rCount)
         case .exponential(_):
-            return Double.infinity
+            return .infinity
         case .unknown:
             return 0
         }
@@ -346,7 +346,7 @@ extension Type {
      - returns: Returns `true` if the type is an opponent type in the given environment, otherwise `false`.
      */
     func isOPPType(inEnvironment environment: Environment) -> Bool {
-        return replicationIndex == Double.infinity && coreType.isOPPType(inEnvironment: environment)
+        return replicationIndex.isInfinite && coreType.isOPPType(inEnvironment: environment)
     }
 }
 
