@@ -439,6 +439,9 @@ extension Type: CustomStringConvertible {
     }
     
     fileprivate var internalDescription: String {
+        if self == .unknown {
+            return "Unknown"
+        }
         let countString = replicationIndex.remainder(dividingBy: 1) == 0 ? String(format: "%.0f", replicationIndex) : "\(replicationIndex)"
         return "\(coreType)!\(countString)"
     }
