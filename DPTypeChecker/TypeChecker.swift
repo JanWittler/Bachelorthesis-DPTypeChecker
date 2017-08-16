@@ -164,6 +164,8 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
         var (expType, envDelta) = try inferType(exp, requiresOPPType: functionSignature.isExposed)
         try makeType(&expType, matchRequiredType: functionSignature.returnType, withDelta: &envDelta, errorForFailure: .invalidReturnType(actual: expType, expected: functionSignature.returnType))
         try environment.applyDelta(envDelta)
+        // stop typechecking of this branch as soon as a return is found since following statements will never be executed
+        return
         
     case let .assert(assertion):
         try checkAssertion(assertion)
