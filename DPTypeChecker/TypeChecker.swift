@@ -432,13 +432,12 @@ private func handleAddNoise(_ exps: [Exp]) throws -> Type {
     let (expType, delta) = try inferType(exp, requiresOPPType: false)
     //apply delta directly, because it must not be scaled after `add_noise` was applied
     try environment.applyDelta(delta)
-    let allowedBaseTypes: [BaseType] = [.int]
+    let allowedBaseTypes: [BaseType] = [.int, .float]
     guard case let .base(baseType) = expType.coreType, allowedBaseTypes.contains(baseType) else {
         throw TypeCheckerError.addNoiseFailed(message: "invalid type for adding noise to\ntype: \(expType)\nin expression: \(exp)")
     }
-    guard expType.replicationIndex.isFinite else {
-        throw TypeCheckerError.addNoiseFailed(message: "adding noise to an exponential type would result in an unusable result and is therefore forbidden")
-    }
+    
+    //it is not required to check the replication index of the noised type or of the function arguments because the amount of noise to add depends on the replication indexes of the arguments of the exposed functions called by the opponent that led to the execution of `add_noise`.
     return .exponential(expType.coreType)
 }
 
