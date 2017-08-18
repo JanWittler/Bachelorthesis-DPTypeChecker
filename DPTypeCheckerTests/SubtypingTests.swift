@@ -12,7 +12,7 @@ class SubtypingTests: XCTestCase {
     func testSubtypereplicationIndex() {
         let coreType = CoreType.base(.int)
         let subtype = Type.default(coreType, 1.8)
-        let supertype = Type.convenienceInt(coreType, 5)
+        let supertype = Type.initInt(coreType, 5)
         let supersupertype = Type.exponential(coreType)
         
         XCTAssertTrue(subtype.isSubtype(of: subtype))

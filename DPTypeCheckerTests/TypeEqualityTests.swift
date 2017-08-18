@@ -14,7 +14,7 @@ class TypeEqualityTests: XCTestCase {
         let t1 = Type.default(coreType, .infinity)
         let t2 = Type.exponential(coreType)
         let t3 = Type.default(coreType, 14)
-        let t4 = Type.convenienceInt(coreType, 14)
+        let t4 = Type.initInt(coreType, 14)
         
         //self-comparison must be tested, since equality is calculated based on value, not on value's memory address
         XCTAssertTrue(t1 == t1)
@@ -30,7 +30,7 @@ class TypeEqualityTests: XCTestCase {
     
     func testBasicTypeEquality() {
         let intType1 = Type.default(.base(.int), 4)
-        let intType2 = Type.convenienceInt(.base(.int), 4)
+        let intType2 = Type.initInt(.base(.int), 4)
         
         XCTAssertTrue(intType1 == intType1)
         XCTAssertTrue(intType1 == intType2)

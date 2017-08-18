@@ -18,18 +18,21 @@ class EnvironmentTests: XCTestCase {
     }
     
     func testDeltaUsageCount() {
+        let x = Id("x")
+        let y = Id("y")
+        
         var delta = Environment.Delta()
-        var expectedResult: [Id : Double] = [:]
+        var expectedResult: [Id : ReplicationIndex] = [:]
         XCTAssertEqual(delta.changes, expectedResult)
         
-        delta.updateUsageCount(for: Id("x"), delta: 1)
-        expectedResult[Id("x")] = 1
+        delta.updateUsageCount(for: x, delta: 1)
+        expectedResult[x] = 1
         XCTAssertEqual(delta.changes, expectedResult)
         
-        delta.updateUsageCount(for: Id("y"), delta: 2)
-        expectedResult[Id("y")] = 2
-        delta.updateUsageCount(for: Id("x"), delta: 3)
-        expectedResult[Id("x")]! += 3
+        delta.updateUsageCount(for: y, delta: 2)
+        expectedResult[y] = 2
+        delta.updateUsageCount(for: x, delta: 3)
+        expectedResult[x] = expectedResult[x]?.adding(3, withRoundingMode: .forUsageCount)
         XCTAssertEqual(delta.changes, expectedResult)
     }
     
@@ -39,7 +42,7 @@ class EnvironmentTests: XCTestCase {
         delta.updateUsageCount(for: Id("y"), delta: 5.3)
         delta.scale(by: 8)
         
-        let expectedResult: [Id : Double] = [Id("x") : 1 * 8, Id("y") : 5.3 * 8]
+        let expectedResult: [Id : ReplicationIndex] = [Id("x") : 8, Id("y") : ReplicationIndex(5.3).multiplying(by: 8, withRoundingMode: .forUsageCount)]
         XCTAssertEqual(delta.changes, expectedResult)
     }
     
@@ -52,7 +55,7 @@ class EnvironmentTests: XCTestCase {
         delta2.updateUsageCount(for: Id("y"), delta: 1)
         
         let merged = delta1.merge(with: delta2)
-        let expectedResult: [Id : Double] = [Id("x") : 1 + 2, Id("y") : 1]
+        let expectedResult: [Id : ReplicationIndex] = [Id("x") : 3, Id("y") : 1]
         XCTAssertEqual(merged.changes, expectedResult)
     }
     

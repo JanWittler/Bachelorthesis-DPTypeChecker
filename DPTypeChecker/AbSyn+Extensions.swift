@@ -11,12 +11,14 @@ import Foundation
 //MARK: custom accessors
 
 extension Type {
-    var replicationIndex: Double {
+    var replicationIndex: ReplicationIndex {
         switch self {
         case let .default(_, rCount):
             return rCount
-        case let .convenienceInt(_ ,rCount):
-            return Double(rCount)
+        case let .initInt(_ ,rCount):
+            return ReplicationIndex(rCount)
+        case let .initDouble(_, rCount):
+            return ReplicationIndex(rCount)
         case .exponential(_):
             return .infinity
         case .unknown:
@@ -25,18 +27,22 @@ extension Type {
     }
     
     var coreType: CoreType {
-        let coreType: CoreType
         switch self {
         case let .default(cType, _):
-            coreType = cType
-        case let .convenienceInt(cType, _):
-            coreType = cType
+            return cType
+        case let .initInt(cType, _):
+            return cType
+        case let .initDouble(cType, _):
+            return cType
         case let .exponential(cType):
-            coreType = cType
+            return cType
         case .unknown:
             return .unknown
         }
-        return coreType
+    }
+    
+    var isExponential: Bool {
+        return replicationIndex.isInfinite
     }
 }
 
@@ -182,12 +188,12 @@ extension Type {
        - requiredType: The type that `self` should be scaled up to match.
      - returns: Returns the scaling factor to apply to match `self` with `requiredType`. The minimal returned value is `1`. Returns `nil` if the two types do not match.
      */
-    func scalingFactorToConvertToType(_ requiredType: Type) -> Double? {
+    func scalingFactorToConvertToType(_ requiredType: Type) -> ReplicationIndex? {
         if requiredType.isSubtype(of: self) {
             return 1
         }
         else if coreType == requiredType.coreType {
-            return max(1, requiredType.replicationIndex / replicationIndex)
+            return max(1, requiredType.replicationIndex.dividing(by: replicationIndex, withRoundingMode: .up))
         }
         //check if `self` contains an unknown type which can be converted to match `requiredType`
         else if canBeConverted(to: requiredType) {
@@ -346,7 +352,7 @@ extension Type {
      - returns: Returns `true` if the type is an opponent type in the given environment, otherwise `false`.
      */
     func isOPPType(inEnvironment environment: Environment) -> Bool {
-        return replicationIndex.isInfinite && coreType.isOPPType(inEnvironment: environment)
+        return isExponential && coreType.isOPPType(inEnvironment: environment)
     }
 }
 
@@ -442,8 +448,7 @@ extension Type: CustomStringConvertible {
         if self == .unknown {
             return "Unknown"
         }
-        let countString = replicationIndex.remainder(dividingBy: 1) == 0 ? String(format: "%.0f", replicationIndex) : "\(replicationIndex)"
-        return "\(coreType)!\(countString)"
+        return "\(coreType)!\(replicationIndex)"
     }
 }
 

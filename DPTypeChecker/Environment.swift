@@ -36,7 +36,7 @@ internal struct Environment {
      */
     struct Delta {
         var isEmpty: Bool { return changes.isEmpty }
-        private(set) var changes: [Id : Double] = [:]
+        private(set) var changes: [Id : ReplicationIndex] = [:]
         
         /**
          Updates the usage count for the given id by the given delta. If there was no entry for the id, the new usage count is equal to `delta`, otherwise the new usage count is the sum of the old usage count and `delta`.
@@ -44,10 +44,10 @@ internal struct Environment {
          - id: The id to update the usage count for.
          - delta: The change of the usage count. This value must be greater than `0`.
          */
-        mutating func updateUsageCount(for id: Id, delta: Double) {
+        mutating func updateUsageCount(for id: Id, delta: ReplicationIndex) {
             precondition(delta > 0, "the given delta must be greater than zero")
             let value = changes[id] ?? 0
-            changes[id] = value + delta
+            changes[id] = value.adding(delta, withRoundingMode: .forUsageCount)
         }
         
         /**
@@ -55,12 +55,12 @@ internal struct Environment {
          - parameters:
          - factor: The factor to scale by. This value must be greater or equal than `1`.
          */
-        mutating func scale(by factor: Double) {
+        mutating func scale(by factor: ReplicationIndex) {
             precondition(factor >= 1, "scaling to lower usage count invalid")
-            changes = changes.reduce([Id : Double]()) {
+            changes = changes.reduce([Id : ReplicationIndex]()) {
                 var dict = $0
                 let (key, value) = $1
-                dict[key] = value * factor
+                dict[key] = value.multiplying(by: factor, withRoundingMode: .forUsageCount)
                 return dict
             }
         }
@@ -68,7 +68,7 @@ internal struct Environment {
         /**
          Merges the given delta with the current one. If both deltas contain a usage count for some id, the result contains the sum of both usage counts for that id. All other usage counts are carried over without modification.
          - parameters:
-         - other: The delta to merge with.
+           - other: The delta to merge with.
          - returns: A new `Delta`-instance containing the merged usage counts of both deltas.
          */
         func merge(with other: Delta) -> Delta {
@@ -88,7 +88,7 @@ internal struct Environment {
      */
     private struct Context {
         /// The variables stored by the context, together with their type and usage count.
-        private var values : [Id : (Type, Double)] = [:]
+        private var values : [Id : (Type, ReplicationIndex)] = [:]
         
         /**
          Adds a variable with the give type and a usage count of `0` to the context.
@@ -114,13 +114,13 @@ internal struct Environment {
          - delta: The change to the usage count. This value must be greater than `0`.
          - throws: Throws a `TypeCheckerError.variableNotFound` error if the variable is not present in the context. Throws a `TypeCheckerError.invalidVariableAccess` error if the usage count of the variable exceeds its allowed count, which is the replication index of the variables type.
          */
-        mutating func updateUsageCount(for id: Id, delta: Double) throws {
+        mutating func updateUsageCount(for id: Id, delta: ReplicationIndex) throws {
             precondition(delta >= 0, "the usage count can't be reduced")
             
             guard let (type, count) = values[id] else {
                 throw TypeCheckerError.variableNotFound(id)
             }
-            let newCount = count + delta
+            let newCount = count.adding(delta, withRoundingMode: .forUsageCount)
             guard type.replicationIndex >= newCount else {
                 throw TypeCheckerError.invalidVariableAccess(id)
             }
@@ -130,7 +130,7 @@ internal struct Environment {
         /**
          Looks up the type of the variable with the given id in the context.
          - parameters:
-         - id: The id of the variable to search for.
+           - id: The id of the variable to search for.
          - returns: The type of the variable.
          - throws: Throws a `TypeCheckerError.variableNotFound` error if the variable is not found in the context.
          */
@@ -147,11 +147,11 @@ internal struct Environment {
         /**
          Looks up the usage count of the variable with the given id in the context. The usage count is the number of times the variable was accessed yet and must not be greater than the replication index of the variable's type.
          - parameters:
-         - id: The id of the variable to search for.
+           - id: The id of the variable to search for.
          - returns: The usage count of the variable.
          - throws: Throws a `TypeCheckerError.variableNotFound` error if the variable is not found in the context.
          */
-        func lookupUsageCount(_ id: Id) throws -> Double {
+        func lookupUsageCount(_ id: Id) throws -> ReplicationIndex {
             if let type = values[id] {
                 return type.1
             }
@@ -222,9 +222,9 @@ internal struct Environment {
     /**
      Adds a function with the given argument types and the given return type to the environment's global elements.
      - parameters:
-     - id: The id of the function. This must be unique among other functions and type definitions.
-     - arguments: The argument types of the function.
-     - returnType: The return type of the function.
+       - id: The id of the function. This must be unique among other functions and type definitions.
+       - arguments: The argument types of the function.
+       - returnType: The return type of the function.
      - throws: Throws a `TypeCheckerError.nameAlreadyInUse` error if the given id is already in use. Throws a `TypeCheckerError.invalidType` error if any given type is invalid.
      */
     mutating func addFunction(id: Id, arguments: [Type], returnType: Type) throws {
@@ -251,8 +251,8 @@ internal struct Environment {
     /**
      Adds a variable with given id and type to the current context.
      - parameters:
-     - id: The id of the type. The id must not be used for any global element or any variable in the current context yet.
-     - type: The type of the variable.
+       - id: The id of the type. The id must not be used for any global element or any variable in the current context yet.
+       - type: The type of the variable.
      - throws: Throws a `TypeCheckerError.nameAlreadyInUse` error if the given id is already in use for a global element. Throws a `TypeCheckerError.variableAlreadyExists` error if the given id is already present in the current context.
      */
     mutating func addToCurrentContext(_ id: Id, type: Type) throws {
@@ -264,7 +264,7 @@ internal struct Environment {
     /**
      Looks up the type of the variable with the given id in the `contexts` stack, starting with the topmost one. If there are multiple contexts containing a variable with the given id, the type stored in the topmost context, which contains the variable, is returned.
      - parameters:
-     - id: The id of the variable to search for.
+       - id: The id of the variable to search for.
      - returns: The type of the variable.
      - throws: Throws a `TypeCheckerError.variableNotFound` error if the variable is not found in any context.
      */
@@ -284,7 +284,7 @@ internal struct Environment {
     /**
      Looks up the argument types and return type of the function with the given id.
      - parameters:
-     - id: The id of the function to search for.
+       - id: The id of the function to search for.
      - returns: Returns the argument types and return type of the function.
      - throws: Throws a `TypeCheckerError.functionNotFound` error if the function could not be found.
      */
@@ -298,7 +298,7 @@ internal struct Environment {
     /**
      Looks up the core type of the type definition with the given id.
      - parameters:
-     - id: The id of the type definition to search for.
+       - id: The id of the type definition to search for.
      - returns: Returns the core type of the type definition. Does not return a `Type`-instance because type definitions are not bound to any usage count constraints.
      - throws: Throws a `TypeCheckerError.typeNotFound` error if the type definition could not be found.
      */
@@ -326,11 +326,11 @@ internal struct Environment {
     /**
      Looks up the usage count of the variable with the given id in the `contexts` stack, starting with the topmost one. The usage count is the number of times the variable was accessed yet and must not be greater than the replication index of the variable's type. If there are multiple contexts containing a variable with the given id, the usage count stored in the topmost context, which contains the variable, is returned.
      - parameters:
-     - id: The id of the variable to search for.
+       - id: The id of the variable to search for.
      - returns: The usage count of the variable.
      - throws: Throws a `TypeCheckerError.variableNotFound` error if the variable is not found in any context.
      */
-    internal func lookupUsageCount(_ id: Id) throws -> Double {
+    internal func lookupUsageCount(_ id: Id) throws -> ReplicationIndex {
         //check topmost context first
         for context in contexts.reversed() {
             do {
@@ -346,7 +346,7 @@ internal struct Environment {
     /**
      Applies the given delta to the environment. Every change in the `Delta`-instance is applied to the environment by updating the usage count of the variable in the topmost context which contains that variable.
      - parameters:
-     - delta: The delta to apply.
+       - delta: The delta to apply.
      - throws: Throws a `TypeCheckerError.variableNotFound` error if a variable in the `Delta`-instance could not be found in the environment's contexts. Throws a `TypeCheckerError.invalidVariableAccess` if the usage count for some variable after applying the delta is greater than the variable's type replication index.
      */
     mutating func applyDelta(_ delta: Delta) throws {
@@ -355,7 +355,7 @@ internal struct Environment {
         }
     }
     
-    private mutating func updateUsageCount(for id: Id, delta: Double) throws {
+    private mutating func updateUsageCount(for id: Id, delta: ReplicationIndex) throws {
         var index = contexts.count - 1
         while index >= 0 {
             do {

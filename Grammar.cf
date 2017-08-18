@@ -64,9 +64,9 @@ coercions Exp 15 ;
 
 AssertionTypeEqual. Assertion ::= "assertTypeEqual" "(" Id "," Type ")" ;
 
-TypeDefault. 		Type ::= CoreType "!" Double ;
+TypeInitDouble.		Type ::= CoreType "!" Double ;
+TypeInitInt. 		Type ::= CoreType "!" Integer ;
 TypeExponential.  	Type ::= CoreType "!" "inf" ;
-TypeConvenienceInt. Type ::= CoreType "!" Integer ;
 
 CoreTypeBase.    CoreType ::= BaseType ;
 CoreTypeMulPair. CoreType ::= "(" Type "," Type ")" ;

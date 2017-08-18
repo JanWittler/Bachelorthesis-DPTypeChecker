@@ -117,7 +117,7 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
         }
         
         //fix unknown types and get scaling factor for each pair element
-        let fixedTypesAndFactors = try [(type1, idMaybeTyped1), (type2, idMaybeTyped2)].map { (type, idMaybeTyped) -> (Type, Double) in
+        let fixedTypesAndFactors = try [(type1, idMaybeTyped1), (type2, idMaybeTyped2)].map { (type, idMaybeTyped) -> (Type, ReplicationIndex) in
             if let requiredType = idMaybeTyped.type {
                 //use the core type of the required type to solve for `unknown` types but keep the old replication index since this gets recomputed when variable is added to environment
                 let resultType = Type.default(requiredType.coreType, type.replicationIndex)
@@ -129,8 +129,8 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
             return (type, 1)
         }
         
-        let factor1: Double
-        let factor2: Double
+        let factor1: ReplicationIndex
+        let factor2: ReplicationIndex
         (type1, factor1) = fixedTypesAndFactors[0]
         (type2, factor2) = fixedTypesAndFactors[1]
         let maxFactor = max(factor1, factor2)
@@ -140,8 +140,8 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
         try environment.applyDelta(envDelta)
         let id1 = idMaybeTyped1.id
         let id2 = idMaybeTyped2.id
-        try environment.addToCurrentContext(id1, type: .default(type1.coreType, type1.replicationIndex * maxFactor))
-        try environment.addToCurrentContext(id2, type: .default(type2.coreType, type2.replicationIndex * maxFactor))
+        try environment.addToCurrentContext(id1, type: .default(type1.coreType, type1.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
+        try environment.addToCurrentContext(id2, type: .default(type2.coreType, type2.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
         
     case let .ifElse(condition, ifStms, `else`):
         if let elseStms = `else`.stms {
@@ -396,7 +396,7 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
         }
         
         //fix unknown types and get scaling factor for each pair element
-        let fixedTypesAndFactors = try [(elemType, headIdMaybeTyped), (listType, tailIdMaybeTyped)].map { (type, idMaybeTyped) -> (Type, Double) in
+        let fixedTypesAndFactors = try [(elemType, headIdMaybeTyped), (listType, tailIdMaybeTyped)].map { (type, idMaybeTyped) -> (Type, ReplicationIndex) in
             if let requiredType = idMaybeTyped.type {
                 //use the core type of the required type to solve for `unknown` types but keep the old replication index since this gets recomputed when variable is added to environment
                 let resultType = Type.default(requiredType.coreType, type.replicationIndex)
@@ -408,8 +408,8 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
             return (type, 1)
         }
         
-        let factor1: Double
-        let factor2: Double
+        let factor1: ReplicationIndex
+        let factor2: ReplicationIndex
         (elemType, factor1) = fixedTypesAndFactors[0]
         (listType, factor2) = fixedTypesAndFactors[1]
         let maxFactor = max(factor1, factor2)
@@ -419,8 +419,8 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
         try environment.applyDelta(delta)
         let head = headIdMaybeTyped.id
         let tail = tailIdMaybeTyped.id
-        try environment.addToCurrentContext(head, type: .default(elemType.coreType, elemType.replicationIndex * maxFactor))
-        try environment.addToCurrentContext(tail, type: .default(listType.coreType, listType.replicationIndex * maxFactor))
+        try environment.addToCurrentContext(head, type: .default(elemType.coreType, elemType.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
+        try environment.addToCurrentContext(tail, type: .default(listType.coreType, listType.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
     }
 }
 
@@ -459,7 +459,8 @@ private func handleAdditionOrSubtraction(_ e1: Exp, _ e2: Exp, originalExpressio
     
     //allow list addition
     if case .plus = exp, case let .list(elem1) = type1.coreType, case let .list(elem2) = type2.coreType {
-        //take the element type that matches both lists, i.e. the subtype one to match the other if possible
+        //take the element type that matches both lists, i.e. subtype one to match the other if possible
+        //do not implicitly type generic lists to the type of the other list, as the generic list could be used later again and then typed to another element type which gives an inconsistency
         if elem1.isSubtype(of: elem2) {
             return (.default(.list(elem1), lowerReplicationIndex), delta)
         }
@@ -482,7 +483,7 @@ private func handleMultiplicationOrDivision(_ e1: Exp, _ e2: Exp, originalExpres
         throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
     }
     
-    let mulWithConst: ((Type, Environment.Delta, Double) -> (Type, Environment.Delta)) = {
+    let mulWithConst: ((Type, Environment.Delta, ReplicationIndex) -> (Type, Environment.Delta)) = {
         var delta = $1
         //take the absolute value to handle negative numbers correctly
         //scaling to numbers less than 1 is forbidden thus assure that factor is at least 1
@@ -502,18 +503,18 @@ private func handleMultiplicationOrDivision(_ e1: Exp, _ e2: Exp, originalExpres
     //check if it is a division by a constant value; division by non-exponential non-constant type is not supported
     if case .div = exp {
         if delta2.isEmpty, let value = constantValueFromExpression(e2) {
-            return mulWithConst(type1, delta1, 1 / value)
+            return mulWithConst(type1, delta1, ReplicationIndex(1).dividing(by: value, withRoundingMode: .up))
         }
     }
         
     //check if both types are exponential or can be scaled up to that
     do {
         var environmentCopy = environment
-        if type1.replicationIndex.isFinite {
+        if !type1.isExponential {
             delta1.scale(by: .infinity)
             try environmentCopy.applyDelta(delta1)
         }
-        if type2.replicationIndex.isFinite {
+        if !type2.isExponential {
             delta2.scale(by: .infinity)
             try environmentCopy.applyDelta(delta2)
         }
@@ -551,11 +552,11 @@ private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp,
     if allowedCoreTypes.contains(type1.coreType) && type1.coreType == type2.coreType {
         do {
             var environmentCopy = environment
-            if type1.replicationIndex.isFinite {
+            if !type1.isExponential {
                 delta1.scale(by: .infinity)
                 try environmentCopy.applyDelta(delta1)
             }
-            if type2.replicationIndex.isFinite {
+            if !type2.isExponential {
                 delta2.scale(by: .infinity)
                 try environmentCopy.applyDelta(delta2)
             }
@@ -569,31 +570,31 @@ private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp,
     throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
 }
 
-private func constantValueFromExpression(_ exp: Exp) -> Double? {
+private func constantValueFromExpression(_ exp: Exp) -> ReplicationIndex? {
     switch exp {
     case let .float(value):
-        return value
+        return ReplicationIndex(value)
     case let .int(value):
-        return Double(value)
+        return ReplicationIndex(value)
     case let .negative(e):
         if let value = constantValueFromExpression(e) {
             return -value
         }
     case let .times(e1, e2):
         if let value1 = constantValueFromExpression(e1), let value2 = constantValueFromExpression(e2) {
-            return value1 * value2
+            return value1.multiplying(by: value2, withRoundingMode: .up)
         }
     case let .div(e1, e2):
         if let value1 = constantValueFromExpression(e1), let value2 = constantValueFromExpression(e2), value2 != 0 {
-            return value1 / value2
+            return value1.dividing(by: value2, withRoundingMode: .up)
         }
     case let .plus(e1, e2):
         if let value1 = constantValueFromExpression(e1), let value2 = constantValueFromExpression(e2) {
-            return value1 + value2
+            return value1.adding(value2, withRoundingMode: .up)
         }
     case let .minus(e1, e2):
         if let value1 = constantValueFromExpression(e1), let value2 = constantValueFromExpression(e2) {
-            return value1 - value2
+            return value1.adding(value2, withRoundingMode: .up)
         }
     default:
         break
@@ -610,12 +611,12 @@ private func checkAssertion(_ assertion: Assertion) throws {
         let idType = try environment.lookup(id)
         let usageCount = try environment.lookupUsageCount(id)
         let updatedType: Type
-        if idType.replicationIndex.isInfinite {
+        if idType.isExponential {
             //exponential types will always be exponentials, independent of usage count
             updatedType = idType
         }
         else {
-            updatedType = Type.default(idType.coreType, idType.replicationIndex - usageCount)
+            updatedType = Type.default(idType.coreType, idType.replicationIndex.subtracting(usageCount, withRoundingMode: .forTypeConstruction))
         }
         guard updatedType == type else {
             let errorMessage = "variable `\(id.value)` does not match type\n" +
