@@ -28,7 +28,7 @@ class OPPTypeTests: XCTestCase {
     func testBasicOPPTypes() {
         let environment = Environment()
         let int = Type.exponential(.base(.int))
-        let double = Type.exponential(.base(.float))
+        let double = Type.exponential(.base(.double))
         let unit = Type.exponential(.base(.unit))
         let notOPP = Type.default(.base(.int), 12345)
         

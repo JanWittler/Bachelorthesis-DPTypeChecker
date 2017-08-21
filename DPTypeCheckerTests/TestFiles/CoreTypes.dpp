@@ -1,13 +1,13 @@
 //core types
 func testCoreTypes() -> Unit!1 {
     let a: Int!1 = 10
-    let b: Float!5 = 4.2
+    let b: Double!5 = 4.2
     let c = ()
     let d = true
     let e: Bool!2 = false
 
     assertTypeEqual(a, Int!1)
-    assertTypeEqual(b, Float!5)
+    assertTypeEqual(b, Double!5)
     assertTypeEqual(c, Unit!1)
     assertTypeEqual(d, Bool!1)
     assertTypeEqual(e, Bool!2)

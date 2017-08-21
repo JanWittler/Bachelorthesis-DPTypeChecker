@@ -16,7 +16,7 @@ func testOptional_0() -> Unit!1 {
     let g: Optional<Int!5>!10 = Nothing
 
     assertTypeEqual(a, Optional<Int!1>!1)
-    assertTypeEqual(b, Optional<(Float!1, Unit!1)!1>!1)
+    assertTypeEqual(b, Optional<(Double!1, Unit!1)!1>!1)
     assertTypeEqual(c, Optional<Sum!1>!1)
     assertTypeEqual(d, Optional<[Bool!1]!1>!1)
     assertTypeEqual(e, Optional<((Int!1) -> Int!1)!1>!1)

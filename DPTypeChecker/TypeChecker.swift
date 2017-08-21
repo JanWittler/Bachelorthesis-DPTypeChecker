@@ -121,7 +121,7 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
             if let requiredType = idMaybeTyped.type {
                 //use the core type of the required type to solve for `unknown` types but keep the old replication index since this gets recomputed when variable is added to environment
                 let resultType = Type.default(requiredType.coreType, type.replicationIndex)
-                guard let factor = type.scalingFactorToConvertToType(requiredType) else {
+                guard let factor = try type.scalingFactorToConvertToType(requiredType, inEnvironment: environment) else {
                     throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: requiredType)
                 }
                 return (resultType, factor)
@@ -178,8 +178,8 @@ private func inferType(_ exp: Exp, requiresOPPType: Bool) throws -> (Type, Envir
     switch exp {
     case .int:
         return (.default(.base(.int), 1), Environment.Delta())
-    case .float:
-        return (.default(.base(.float), 1), Environment.Delta())
+    case .double:
+        return (.default(.base(.double), 1), Environment.Delta())
     case .unit:
         return (.default(.base(.unit), 1), Environment.Delta())
     case .true:
@@ -325,7 +325,7 @@ private func inferType(_ exp: Exp, requiresOPPType: Bool) throws -> (Type, Envir
         let (type, delta) = try inferType(e1, requiresOPPType: requiresOPPType)
         let allowedCoreTypes: [CoreType] = [
             .base(.int),
-            .base(.float)
+            .base(.double)
         ]
         if allowedCoreTypes.contains(type.coreType) {
             return (type, delta)
@@ -364,7 +364,7 @@ private func inferType(_ exp: Exp, requiresOPPType: Bool) throws -> (Type, Envir
 }
 
 private func makeType(_ type: inout Type, matchRequiredType requiredType: Type, withDelta delta: inout Environment.Delta, errorForFailure: TypeCheckerError) throws {
-    if let factor = type.scalingFactorToConvertToType(requiredType) {
+    if let factor = try type.scalingFactorToConvertToType(requiredType, inEnvironment: environment) {
         delta.scale(by: factor)
     }
     else {
@@ -400,7 +400,7 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
             if let requiredType = idMaybeTyped.type {
                 //use the core type of the required type to solve for `unknown` types but keep the old replication index since this gets recomputed when variable is added to environment
                 let resultType = Type.default(requiredType.coreType, type.replicationIndex)
-                guard let factor = type.scalingFactorToConvertToType(requiredType) else {
+                guard let factor = try type.scalingFactorToConvertToType(requiredType, inEnvironment: environment) else {
                     throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: requiredType)
                 }
                 return (resultType, factor)
@@ -432,7 +432,7 @@ private func handleAddNoise(_ exps: [Exp]) throws -> Type {
     let (expType, delta) = try inferType(exp, requiresOPPType: false)
     //apply delta directly, because it must not be scaled after `add_noise` was applied
     try environment.applyDelta(delta)
-    let allowedBaseTypes: [BaseType] = [.int, .float]
+    let allowedBaseTypes: [BaseType] = [.int, .double]
     guard case let .base(baseType) = expType.coreType, allowedBaseTypes.contains(baseType) else {
         throw TypeCheckerError.addNoiseFailed(message: "invalid type for adding noise to\ntype: \(expType)\nin expression: \(exp)")
     }
@@ -450,7 +450,7 @@ private func handleAdditionOrSubtraction(_ e1: Exp, _ e2: Exp, originalExpressio
     
     let allowedCoreTypes: [CoreType] = [
         .base(.int),
-        .base(.float)
+        .base(.double)
     ] //replication index is always 1
     if allowedCoreTypes.contains(type1.coreType) && type1.coreType == type2.coreType {
         let resultType = Type.default(type1.coreType, lowerReplicationIndex)
@@ -477,7 +477,7 @@ private func handleMultiplicationOrDivision(_ e1: Exp, _ e2: Exp, originalExpres
     
     let allowedCoreTypes: [CoreType] = [
         .base(.int),
-        .base(.float)
+        .base(.double)
     ]
     guard allowedCoreTypes.contains(type1.coreType) && type1.coreType == type2.coreType else {
         throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
@@ -538,7 +538,7 @@ private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp,
     var (type2, delta2) = try inferType(e2, requiresOPPType: requiresOPPType)
     var allowedCoreTypes: [CoreType] = [
         .base(.int),
-        .base(.float),
+        .base(.double),
     ] //since comparison yields bool type which can magnify distance of input by infinity, input to comparison must have exponential type
     
     //booleans can not be ordered, thus only allow them for `==` and `!=`
@@ -572,7 +572,7 @@ private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp,
 
 private func constantValueFromExpression(_ exp: Exp) -> ReplicationIndex? {
     switch exp {
-    case let .float(value):
+    case let .double(value):
         return ReplicationIndex(value)
     case let .int(value):
         return ReplicationIndex(value)

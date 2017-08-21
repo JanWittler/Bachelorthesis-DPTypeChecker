@@ -12,22 +12,22 @@ func testOperators_0() -> Unit!1 {
     assertTypeEqual(y, Int!0)
     assertTypeEqual(w, Int!2)
 
-    let a: Float!5 = 4.2
-    let b: Float!3 = 2.4
-    let c: Float!2 = a + b
-    assertTypeEqual(a, Float!3)
-    assertTypeEqual(b, Float!1)
-    assertTypeEqual(c, Float!2)
+    let a: Double!5 = 4.2
+    let b: Double!3 = 2.4
+    let c: Double!2 = a + b
+    assertTypeEqual(a, Double!3)
+    assertTypeEqual(b, Double!1)
+    assertTypeEqual(c, Double!2)
 
     let d = a - b
-    assertTypeEqual(a, Float!2)
-    assertTypeEqual(b, Float!0)
-    assertTypeEqual(d, Float!1)
+    assertTypeEqual(a, Double!2)
+    assertTypeEqual(b, Double!0)
+    assertTypeEqual(d, Double!1)
 
     let e = -1
     let f = -1.0
     assertTypeEqual(e, Int!1)
-    assertTypeEqual(f, Float!1)
+    assertTypeEqual(f, Double!1)
 
     return ()
 }

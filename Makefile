@@ -7,6 +7,7 @@ build: grammar mapping
 	
 grammar: $(grammar)
 	bnfc -c -m $(grammar) -o CGrammar 
+	cd CGrammar && sed -i '' s/"Float"/"Double"/g Grammar.l #using the "Double" literal in the Grammar file gives some strange errors thus this indirection
 	cd CGrammar && perl -0777 -i -pe 's:union *\n? *{ *\n? *} *u *; *://removed empty union due to swift incompatability:g' Absyn.h
 	cd CGrammar && make
 

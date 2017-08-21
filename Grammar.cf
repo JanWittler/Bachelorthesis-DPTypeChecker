@@ -29,7 +29,7 @@ ElseStms. Else ::= "else" "{" [Stm] "}" ;
 rules Case ::= "inl" | "inr" ;
 
 ExpInt.    Exp15 ::= Integer ;
-ExpFloat.  Exp15 ::= Double ;
+ExpDouble. Exp15 ::= Double ;
 ExpUnit.   Exp15 ::= "(" ")" ;
 ExpTrue.   Exp15 ::= "true" ;
 ExpFalse.  Exp15 ::= "false" ;
@@ -80,7 +80,8 @@ GenericsType. Generics ::= "<" Type ">" ;
 
 separator Type "," ;
 
-rules BaseType ::= "Int" | "Float" | "Unit" ;
+rules BaseType ::= "Int" | "Unit" ;
+BaseTypeDouble. BaseType ::= "Float";
 
 token Id (lower (letter | digit | '_')*) ;
 

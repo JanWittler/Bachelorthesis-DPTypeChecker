@@ -182,13 +182,16 @@ extension Type {
     }
     
     /**
-     Returns the scaling factor that is required to match the current type with the given type. The returned factor is never less than `1`. If the two types do not match, `nil` is returned.
+     Returns the scaling factor that is required to match the current type with the given type. The returned factor is never less than `1`. If the two types do not match, `nil` is returned. An error is thrown if `requiredType` is not valid in the given environment.
      - Note: Unknown types contained in `self` are treated as if they would match their counterpart in `requiredType`. Thus after applying the scaling, `self` should not be used furthermore but rather the `requiredType` variable.
      - parameters:
        - requiredType: The type that `self` should be scaled up to match.
+       - environment: The environment in which the required type must be valid.
      - returns: Returns the scaling factor to apply to match `self` with `requiredType`. The minimal returned value is `1`. Returns `nil` if the two types do not match.
+     - throws: Throws a `TypeCheckerError.invalidType` or a TypeCheckerError.typeNotFound` error if the type is invalid.
      */
-    func scalingFactorToConvertToType(_ requiredType: Type) -> ReplicationIndex? {
+    func scalingFactorToConvertToType(_ requiredType: Type, inEnvironment environment: Environment) throws -> ReplicationIndex? {
+        try requiredType.validate(inEnvironment: environment)
         if requiredType.isSubtype(of: self) {
             return 1
         }
@@ -197,7 +200,7 @@ extension Type {
         }
         //check if `self` contains an unknown type which can be converted to match `requiredType`
         else if canBeConverted(to: requiredType) {
-            return Type.default(requiredType.coreType, replicationIndex).scalingFactorToConvertToType(requiredType)
+            return try Type.default(requiredType.coreType, replicationIndex).scalingFactorToConvertToType(requiredType, inEnvironment: environment)
         }
         return nil
     }
@@ -482,8 +485,8 @@ extension BaseType: CustomStringConvertible {
         switch self {
         case .int:
             return "Int"
-        case .float:
-            return "Float"
+        case .double:
+            return "Double"
         case .unit:
             return "Unit"
         }

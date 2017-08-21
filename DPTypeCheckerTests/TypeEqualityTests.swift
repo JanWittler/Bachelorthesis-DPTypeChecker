@@ -36,8 +36,8 @@ class TypeEqualityTests: XCTestCase {
         XCTAssertTrue(intType1 == intType2)
         XCTAssertTrue(intType2 == intType1)
         
-        let doubleType1 = Type.exponential(.base(.float))
-        let doubleType2 = Type.default(.base(.float), .infinity)
+        let doubleType1 = Type.exponential(.base(.double))
+        let doubleType2 = Type.default(.base(.double), .infinity)
         
         XCTAssertTrue(doubleType1 == doubleType2)
         
