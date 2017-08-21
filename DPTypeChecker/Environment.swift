@@ -8,8 +8,6 @@
 
 import Foundation
 
-public let addNoiseId        = Id("add_noise")
-
 public let boolTypeIdent     = Ident("Bool")
 public let optionalTypeIdent = Ident("Optional")
 public let readTypeIdent     = Ident("Read")
@@ -21,8 +19,6 @@ public let writeTypeIdent    = Ident("Write")
 internal struct Environment {    
     /// Global elements that can get managed by the environment.
     private enum GlobalElement {
-        /// The `add_noise` element which is present in every environment.
-        case addNoise
         /// A function element with its arguments types and return type.
         case function(args: [Type], returnType: Type)
         /// A  type defintion element with its associated core type and information if type contains generics.
@@ -163,8 +159,6 @@ internal struct Environment {
     
     /// The global elements stored by this environment
     private var globals: [String : GlobalElement] = [
-        //the `add_noise` function is present in every environment
-        addNoiseId.value : .addNoise,
         //Bool = Unit!inf + Unit!inf
         boolTypeIdent.value : .typedef(coreType: .sum(.exponential(.base(.unit)), .exponential(.base(.unit))), containsGenerics: false),
         //Optional<τ> = Unit!inf + τ
@@ -186,8 +180,6 @@ internal struct Environment {
         }
         let usageType: String
         switch global {
-        case .addNoise:
-            usageType = "function"
         case .function:
             usageType = "function"
         case .typedef:

@@ -258,10 +258,6 @@ private func inferType(_ exp: Exp, requiresOPPType: Bool) throws -> (Type, Envir
         let writeType = Type.exponential(writeCoreType)
         return (.default(.mulPair(readType, writeType), 1), Environment.Delta())
     case let .app(id, exps):
-        guard id != addNoiseId else {
-            return (try handleAddNoise(exps), Environment.Delta())
-        }
-        
         let args: [Type], returnType: Type
         var delta = Environment.Delta()
         
@@ -321,6 +317,8 @@ private func inferType(_ exp: Exp, requiresOPPType: Bool) throws -> (Type, Envir
             let returnType = Type.default(functionType, 1)
             return (returnType, delta)
         }
+    case let .noising(e1):
+        return (try handleAddNoise(e1), Environment.Delta())
     case let .negative(e1):
         let (type, delta) = try inferType(e1, requiresOPPType: requiresOPPType)
         let allowedCoreTypes: [CoreType] = [
@@ -424,11 +422,7 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
     }
 }
 
-private func handleAddNoise(_ exps: [Exp]) throws -> Type {
-    guard exps.count == 1 else {
-        throw TypeCheckerError.addNoiseFailed(message: "the add_noise construct requires exactly one argument but was provided \(exps.count)\nnamely \(exps)")
-    }
-    let exp = exps.first!
+private func handleAddNoise(_ exp: Exp) throws -> Type {
     let (expType, delta) = try inferType(exp, requiresOPPType: false)
     //apply delta directly, because it must not be scaled after `add_noise` was applied
     try environment.applyDelta(delta)

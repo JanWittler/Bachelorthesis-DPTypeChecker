@@ -42,6 +42,7 @@ ExpList.   Exp15 ::= "[" [Exp] "]" ;
 ExpRef.    Exp15 ::= "ref" "<" Type ">" "(" ")" ;
 
 ExpApp.    Exp15 ::= Id "(" [Exp] ")" ;
+ExpNoising.Exp15 ::= "add_noise" "(" Exp ")" ;
 
 ExpNegative. Exp14 ::= "-" Exp13 ;
 ExpNot.      Exp13 ::= "!"  Exp14 ;
