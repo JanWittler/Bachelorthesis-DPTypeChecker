@@ -5,15 +5,30 @@ func testOperators_2() -> Bool!2 {
     let c = a == b
     let d = a != b
 
+    assertTypeEqual(a, Bool!inf)
+    assertTypeEqual(b, Bool!inf)
+    assertTypeEqual(c, Bool!inf)
+    assertTypeEqual(d, Bool!inf)
+
     let e: Int!inf = 10
     let f: Int!inf = 5
     let g = e < f
     let h = e > 7
 
+    assertTypeEqual(e, Int!inf)
+    assertTypeEqual(f, Int!inf)
+    assertTypeEqual(g, Bool!inf)
+    assertTypeEqual(h, Bool!inf)
+
     let i: Double!inf = 5.4
     let j: Double!inf = 2.7
     let k = i <= j
     let l = j >= 10.0
+
+    assertTypeEqual(i, Double!inf)
+    assertTypeEqual(j, Double!inf)
+    assertTypeEqual(k, Bool!inf)
+    assertTypeEqual(l, Bool!inf)
 
     return 4 < 5
 }
