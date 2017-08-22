@@ -337,7 +337,7 @@ extension CoreType {
     /**
      Returns a copy of the current core type where all generic types are replaced by the given type. If the current core type does not contain any generic type, a copy of the current core type itself is returned.
      - parameters:
-     - type: The type to replace generic types with.
+       - type: The type to replace generic types with.
      - returns: Returns a core type where all generic types are replaced by the given type. If the core type does not contain any generic type, a copy of the core type itself is returned.
      */
     func replaceAllGenericTypes(with type: Type) -> CoreType {

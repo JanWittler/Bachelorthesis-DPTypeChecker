@@ -45,6 +45,12 @@ private func populateEnvironment(_ defs: [Def]) throws {
     }
 }
 
+/**
+ Type-checks the given definition under the current environment. Throws an error if the type-check failed.
+ - parameters:
+   - def: The definition to type-check.
+ - throws: Throws an instance of `TypeCheckerError` if the type-check failed.
+ */
 private func checkDef(_ def: Def) throws {
     switch def {
     case let .fun(id, args, returnType, stms):
@@ -60,6 +66,16 @@ private func checkDef(_ def: Def) throws {
     }
 }
 
+/**
+ Type-checks the given function under the current environment. Throws an error if the type-check failed.
+ - parameters:
+   - id: The id of the function.
+   - args: The arguments of the function.
+   - returnType: The return type of the function.
+   - stms: The statements of the function's body.
+   - isExposed: Indicates whether the function is an exposed function. Exposed functions are required to return an opponent type.
+ - throws: Throws an instance of `TypeCheckerError` if the type-check failed.
+ */
 private func checkFunction(id: Id, args: [Arg], returnType: Type, stms: [Stm], isExposed: Bool) throws {
     guard containsReturnStatement(stms) else {
         throw TypeCheckerError.missingReturn(function: id)
@@ -70,6 +86,12 @@ private func checkFunction(id: Id, args: [Arg], returnType: Type, stms: [Stm], i
     try checkStms(stms, functionSignature: signature)
 }
 
+/**
+ A convenience method to add all arguments of a function to the current context.
+ - parameters:
+   - args: The arguments of the function to add.
+ - throws: Throws an instance of `TypeCheckerError` if any argument's type is not valid or a variable with the argument's name already exists in the current context.
+ */
 private func addArgsToCurrentContext(_ args: [Arg]) throws {
     try args.forEach { arg in
         switch arg {
@@ -79,6 +101,12 @@ private func addArgsToCurrentContext(_ args: [Arg]) throws {
     }
 }
 
+/**
+ Verifies that a function reaches a `return`-statement in every possible execution flow of the function's body.
+ - parameters:
+   - stms: The statements of the function's body.
+ - returns: Returns `true` if a `return`-statement is reached in any case, otherwise `false`.
+ */
 private func containsReturnStatement(_ stms: [Stm]) -> Bool {
     return stms.reduce(false, { result, stm -> Bool in
         let isReturn: Bool
@@ -94,10 +122,26 @@ private func containsReturnStatement(_ stms: [Stm]) -> Bool {
     })
 }
 
+/**
+ Type-checks the given statements under the current environment. Throws an error if the type-check failed.
+ - parameters:
+   - stms: The statements to type-check.
+ - functionSignature: The signature of the function to which the given statements belong.
+ - throws: Throws an instance of `TypeCheckerError` if the type-check failed.
+ */
 private func checkStms(_ stms: [Stm], functionSignature: FunctionSignature) throws {
+    // calling the check statements recursively instead of iteratively is done to have correct behavior on branching (if-else) since the environment may get altered differently in the branches, thus type-checking must be performed for all branches independently (which is easier to achieve with recursion).
     try checkStm(stms.first, functionSignature: functionSignature, followingStatements: Array(stms.dropFirst()))
 }
 
+/**
+ Type-checks first the given statement and then the given following statements under the current environment. Throws an error if the type-check failed.
+ - parameters:
+   - stm: The statement to type-check. If this is `nil`, the execution of this method is stopped.
+   - functionSignature: The signature of the function to which the given statement and following statements belong.
+   - followingStatements: The statements that are type-checked after `stm` is type-checked.
+ - throws: Throws an instance of `TypeCheckerError` if the type-check failed.
+ */
 private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followingStatements: [Stm]) throws {
     guard let stm = stm else { return }
     
@@ -174,6 +218,14 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
     try checkStms(followingStatements, functionSignature: functionSignature)
 }
 
+/**
+ Infers the type of the given expression. If an opponent type is required, elements of composed types are tried to be scaled to exponential types. Returns the type of the expression and an environment delta that indicates the changes that must occur to the environment in order to successfully type-check the given expression.
+ - parameters:
+   - exp: The expression to infer the type of.
+   - requiresOPPType: Indicates whether an opponent type is required as the result of the type inference. This is the case in the return statement of an exposed function.
+ - returns: Returns the type of the expression and an environment delta that indicates the changes to the environment when type-checking the given expression.
+ - throws: Throws an instance of `TypeCheckerError` if the type inference failed.
+ */
 private func inferType(_ exp: Exp, requiresOPPType: Bool) throws -> (Type, Environment.Delta) {
     switch exp {
     case .int:
@@ -311,7 +363,7 @@ private func inferType(_ exp: Exp, requiresOPPType: Bool) throws -> (Type, Envir
         if (exps.count == args.count) {
             return (returnType, delta)
         }
-        else { //allow for currying
+        else { //allow partial function application
             let missingArgs = args.dropFirst(exps.count)
             let functionType = CoreType.function(Array(missingArgs), returnType)
             let returnType = Type.default(functionType, 1)
@@ -361,6 +413,15 @@ private func inferType(_ exp: Exp, requiresOPPType: Bool) throws -> (Type, Envir
     }
 }
 
+/**
+ A helper method to correctly scale an inferred type to a required (annotated) type. Since unknown types contained in `type` are treated as if they would match their counterpart in the required type, `type` is changed during the method execution to match `requiredType` to avoid wrong types in further execution. Throws an error if the required type is invalid. Throws `errorForFailure` if the given type cannot be scaled to match the required type.
+ - parameters:
+   - type: The type that should be scaled to match the required type.
+   - requiredType: The type that `type` should match.
+   - delta: The delta associated with the given type. It is scaled up if this is necessary to make `type` match `requiredType`.
+   - errorForFailure: An error that should be thrown in case the two types do not match.
+ - throws: Throws an error if the required type is invalid. Throws `errorForFailure` if the given type cannot be scaled to match the required type.
+ */
 private func makeType(_ type: inout Type, matchRequiredType requiredType: Type, withDelta delta: inout Environment.Delta, errorForFailure: TypeCheckerError) throws {
     if let factor = try type.scalingFactorToConvertToType(requiredType, inEnvironment: environment) {
         delta.scale(by: factor)
@@ -371,6 +432,13 @@ private func makeType(_ type: inout Type, matchRequiredType requiredType: Type, 
     type = requiredType
 }
 
+/**
+ Type-checks the given `if`-condition under the current environment. Throws an error if the type-check failed.
+ - parameters:
+   - condition: The `if`-condition to type-check.
+   - stm: The stm from which the condition originated.
+ - throws: Throws an instance of `TypeCheckerError` if the type-check failed.
+ */
 private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws {
     switch condition {
     case let .bool(exp):
@@ -422,6 +490,13 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
     }
 }
 
+/**
+ Performs the validation of an `add_noise` function call. Throws an error if the type-check of the function argument failed or if the function argument has a non-numeric type. Returns the type of the `add_noise` function execution. Does not return an environment delta since adding noise hides any private data thus the delta of the argument is applied directly to the environment to prevent it from incorrectly scaling in further executions.
+ - parameters: 
+   -exp: The expression of the function argument.
+ - returns: Returns the type of the `add_noise` function execution.
+ - throws: Throws an instance of `TypeCheckerError` if type-checking the argument failed or the argument has an invalid type.
+ */
 private func handleAddNoise(_ exp: Exp) throws -> Type {
     let (expType, delta) = try inferType(exp, requiresOPPType: false)
     //apply delta directly, because it must not be scaled after `add_noise` was applied
@@ -435,6 +510,16 @@ private func handleAddNoise(_ exp: Exp) throws -> Type {
     return .exponential(expType.coreType)
 }
 
+/**
+ Extracted parts of the `inferType` method for better readability. Type-checks an addition or subtraction under the current environment. If an opponent type is required, elements of composed types are tried to be scaled to exponential types. Returns the type of the expression and an environment delta that indicates the changes that must occur to the environment in order to successfully type-check the given expression.
+ - parameters:
+   - e1: The first operand.
+   - e2: The second operand.
+   - exp: The original expression.
+   - requiresOPPType: Indicates whether an opponent type is required as the result of the type inference. This is the case in the return statement of an exposed function.
+ - returns: Returns the type of the expression and an environment delta that indicates the changes to the environment when type-checking the given expression.
+ - throws: Throws an instance of `TypeCheckerError` if the type inference failed.
+ */
 private func handleAdditionOrSubtraction(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp, requiresOPPType: Bool) throws -> (Type, Environment.Delta) {
     let (type1, delta1) = try inferType(e1, requiresOPPType: requiresOPPType)
     let (type2, delta2) = try inferType(e2, requiresOPPType: requiresOPPType)
@@ -465,6 +550,16 @@ private func handleAdditionOrSubtraction(_ e1: Exp, _ e2: Exp, originalExpressio
     throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
 }
 
+/**
+ Extracted parts of the `inferType` method for better readability. Type-checks a multiplication or division under the current environment. If an opponent type is required, elements of composed types are tried to be scaled to exponential types. Returns the type of the expression and an environment delta that indicates the changes that must occur to the environment in order to successfully type-check the given expression.
+ - parameters:
+   - e1: The first operand.
+   - e2: The second operand.
+   - exp: The original expression.
+   - requiresOPPType: Indicates whether an opponent type is required as the result of the type inference. This is the case in the return statement of an exposed function.
+ - returns: Returns the type of the expression and an environment delta that indicates the changes to the environment when type-checking the given expression.
+ - throws: Throws an instance of `TypeCheckerError` if the type inference failed.
+ */
 private func handleMultiplicationOrDivision(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp, requiresOPPType: Bool) throws -> (Type, Environment.Delta) {
     var (type1, delta1) = try inferType(e1, requiresOPPType: requiresOPPType)
     var (type2, delta2) = try inferType(e2, requiresOPPType: requiresOPPType)
@@ -487,16 +582,16 @@ private func handleMultiplicationOrDivision(_ e1: Exp, _ e2: Exp, originalExpres
     
     //check if it is a multiplication with a constant value
     if case .times = exp {
-        if delta1.isEmpty, let value = constantValueFromExpression(e1) {
+        if delta1.isEmpty, let value = constantValueFromExpression(e1, roundingMode: .forUsageCount) {
             return mulWithConst(type2, delta2, value)
         }
-        else if delta2.isEmpty, let value = constantValueFromExpression(e2) {
+        else if delta2.isEmpty, let value = constantValueFromExpression(e2, roundingMode: .forUsageCount) {
             return mulWithConst(type1, delta1, value)
         }
     }
     //check if it is a division by a constant value; division by non-exponential non-constant type is not supported
     if case .div = exp {
-        if delta2.isEmpty, let value = constantValueFromExpression(e2) {
+        if delta2.isEmpty, let value = constantValueFromExpression(e2, roundingMode: .forUsageCount) {
             return mulWithConst(type1, delta1, ReplicationIndex(1).dividing(by: value, withRoundingMode: .up))
         }
     }
@@ -527,6 +622,16 @@ private func handleMultiplicationOrDivision(_ e1: Exp, _ e2: Exp, originalExpres
     }
 }
 
+/**
+ Extracted parts of the `inferType` method for better readability. Type-checks a comparison (`<, <=, >, >=, ==, !=`) under the current environment. If an opponent type is required, elements of composed types are tried to be scaled to exponential types. Returns the type of the expression and an environment delta that indicates the changes that must occur to the environment in order to successfully type-check the given expression.
+ - parameters:
+   - e1: The first operand.
+   - e2: The second operand.
+   - exp: The original expression.
+   - requiresOPPType: Indicates whether an opponent type is required as the result of the type inference. This is the case in the return statement of an exposed function.
+ - returns: Returns the type of the expression and an environment delta that indicates the changes to the environment when type-checking the given expression.
+ - throws: Throws an instance of `TypeCheckerError` if the type inference failed.
+ */
 private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp, requiresOPPType: Bool) throws -> (Type, Environment.Delta) {
     var (type1, delta1) = try inferType(e1, requiresOPPType: requiresOPPType)
     var (type2, delta2) = try inferType(e2, requiresOPPType: requiresOPPType)
@@ -564,31 +669,38 @@ private func handleComparison(_ e1: Exp, _ e2: Exp, originalExpression exp: Exp,
     throw TypeCheckerError.noOperatorOverloadFound(exp: exp, types: [type1, type2])
 }
 
-private func constantValueFromExpression(_ exp: Exp) -> ReplicationIndex? {
+/**
+ Infers the constant value of the given expression if possible. Returns a `ReplicationIndex` instance storing the inferred value or `nil` if inference was not possible. Supports inference of basic constants and operations on basic constants. Uses the given rounding mode for cases where the result of some operation cannot be represented exactly by `ReplicationIndex`.
+ - parameters:
+   - exp: The expression to infer the value from.
+   - roundingMode: The rounding mode to use.
+ - returns: Returns an instance of `ReplicationIndex` storing the inferred value or `nil` if inference failed.
+ */
+private func constantValueFromExpression(_ exp: Exp, roundingMode: ReplicationIndex.RoundingMode) -> ReplicationIndex? {
     switch exp {
     case let .double(value):
         return ReplicationIndex(value)
     case let .int(value):
         return ReplicationIndex(value)
     case let .negative(e):
-        if let value = constantValueFromExpression(e) {
+        if let value = constantValueFromExpression(e, roundingMode: roundingMode) {
             return -value
         }
     case let .times(e1, e2):
-        if let value1 = constantValueFromExpression(e1), let value2 = constantValueFromExpression(e2) {
-            return value1.multiplying(by: value2, withRoundingMode: .up)
+        if let value1 = constantValueFromExpression(e1, roundingMode: roundingMode), let value2 = constantValueFromExpression(e2, roundingMode: roundingMode) {
+            return value1.multiplying(by: value2, withRoundingMode: roundingMode)
         }
     case let .div(e1, e2):
-        if let value1 = constantValueFromExpression(e1), let value2 = constantValueFromExpression(e2), value2 != 0 {
-            return value1.dividing(by: value2, withRoundingMode: .up)
+        if let value1 = constantValueFromExpression(e1, roundingMode: roundingMode), let value2 = constantValueFromExpression(e2, roundingMode: roundingMode), value2 != 0 {
+            return value1.dividing(by: value2, withRoundingMode: roundingMode)
         }
     case let .plus(e1, e2):
-        if let value1 = constantValueFromExpression(e1), let value2 = constantValueFromExpression(e2) {
-            return value1.adding(value2, withRoundingMode: .up)
+        if let value1 = constantValueFromExpression(e1, roundingMode: roundingMode), let value2 = constantValueFromExpression(e2, roundingMode: roundingMode) {
+            return value1.adding(value2, withRoundingMode: roundingMode)
         }
     case let .minus(e1, e2):
-        if let value1 = constantValueFromExpression(e1), let value2 = constantValueFromExpression(e2) {
-            return value1.adding(value2, withRoundingMode: .up)
+        if let value1 = constantValueFromExpression(e1, roundingMode: roundingMode), let value2 = constantValueFromExpression(e2, roundingMode: roundingMode) {
+            return value1.adding(value2, withRoundingMode: roundingMode)
         }
     default:
         break
@@ -596,6 +708,13 @@ private func constantValueFromExpression(_ exp: Exp) -> ReplicationIndex? {
     return nil
 }
 
+/**
+ Validates the given assertion under the current environment. Throws an error if the assertion is not hold.
+ - note: Validating an assertion does not change the current environment.
+ - parameters:
+   - assertion: The assertion to validate.
+ - throws: Throws an instance of `TypeCheckerError` if the assertion failed to validate.
+ */
 private func checkAssertion(_ assertion: Assertion) throws {
     //assertions are only for validation during debugging, not for any modification, thus restore the previous environment after checking the assertion
     let previousEnvironment = environment

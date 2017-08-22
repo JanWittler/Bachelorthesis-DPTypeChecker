@@ -3,4 +3,4 @@ A type checker based on the paper [Differential Privacy by Typing in Security Pr
 
 Topic of the bachelor thesis of Jan Wittler.
 
-Tested with Xcode 8.3.3 on macOS Sierra (10.12). Compatability with other version or operation systems cannot be guaranteed.
+Tested with Xcode 8.3.3 on macOS Sierra (10.12). Compatibility with other version or operation systems cannot be guaranteed.

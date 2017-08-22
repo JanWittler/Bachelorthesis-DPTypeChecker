@@ -40,14 +40,29 @@ public struct ReplicationIndex {
     // `NSDecimalNumber` is used internally instead of Swift type `Decimal` to have easier handling with the arithmetic operations.
     fileprivate var value: NSDecimalNumber
     
+    /**
+     Creates an instance initialized to the specified `Decimal` value.
+     - parameters:
+       - value: The value to store.
+     */
     init(_ value: Decimal) {
         self.value = value as NSDecimalNumber
     }
     
+    /**
+     Creates an instance initialized to the specified `Double` value.
+     - parameters:
+       - value: The value to store.
+     */
     init(_ value: Double) {
         self.value = NSDecimalNumber(value: value)
     }
     
+    /**
+     Creates an instance initialized to the specified integer value.
+     - parameters:
+       - value: The value to store.
+     */
     init(_ value: Int) {
         self.value = NSDecimalNumber(value: value)
     }
