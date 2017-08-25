@@ -296,7 +296,6 @@ private func inferType(_ exp: Exp, requiresOPPType: Bool) throws -> (Type, Envir
                 if $0.isSubtype(of: elementType) {
                     elementType = $0
                 }
-                //TODO: support for list with mix of generic element type and known type -> type generic elements to be of the known type
                 else if !elementType.isSubtype(of: $0) {
                    throw TypeCheckerError.listWithHeterogenousElementsNotSupported(exp: exp, types: types)
                 }
