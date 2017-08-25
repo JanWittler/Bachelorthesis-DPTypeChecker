@@ -1,12 +1,25 @@
 //sum unwrapping
 
-typedef Test = union Int!inf | Unit!inf
+typedef Test = union Int!6 | Unit!10
 
-func testSum_0(x: Test!2) -> Int!1 {
+func testSum_0(x: Test!3) -> Int!1 {
 	if (case let left = inl x) {
-		assertTypeEqual(x, Test!1)
-		assertTypeEqual(left, Int!inf)
+		assertTypeEqual(x, Test!2)
+		assertTypeEqual(left, Int!6)
 		return left
 	}
+
+    switch (x) {
+        case let y: Int!12 = inl: {
+            assertTypeEqual(y, Int!12)
+            assertTypeEqual(x, Test!0)
+            return y
+        }
+        case let y = inr: {
+            assertTypeEqual(y, Unit!10)
+            assertTypeEqual(x, Test!1)
+            return 2
+        }
+    }
     return 10
 }

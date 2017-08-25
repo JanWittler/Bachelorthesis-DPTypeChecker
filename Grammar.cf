@@ -13,6 +13,7 @@ ArgDecl.     Arg ::= Id ":" Type ;
 StmInit.     Stm ::= "let" IdMaybeTyped "=" Exp ;
 StmSplit.    Stm ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" Exp ;
 StmIfElse.   Stm ::= "if" "(" IfCond ")" "{" [Stm] "}" Else ;
+StmSwitch.   Stm ::= "switch" "(" Exp ")" "{" [SwitchCase] "}" ;
 StmReturn.   Stm ::= "return" Exp ;
 StmAssert.   Stm ::= Assertion ;
 
@@ -22,6 +23,9 @@ IdMaybeTypedTyped.    IdMaybeTyped ::= Id ":" Type ;
 IfCondCase.   IfCond ::= "case" "let" IdMaybeTyped "=" Case Exp ;
 IfCondBool.   IfCond ::= Exp ; 
 IfCondUnfold. IfCond ::= "let" "(" IdMaybeTyped "," IdMaybeTyped ")" "=" "unfold" Exp ;
+
+SwitchCaseDefault. SwitchCase ::= "case" "let" IdMaybeTyped "=" Case ":" "{" [Stm] "}" ;
+separator nonempty SwitchCase "";
 
 ElseNone. Else ::= ;
 ElseStms. Else ::= "else" "{" [Stm] "}" ;

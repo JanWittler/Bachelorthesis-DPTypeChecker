@@ -217,6 +217,39 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
         try checkStms(ifStms, functionSignature: functionSignature)
         environment.popContext()
         
+    case let .switch(exp, cases):
+        let (type, delta) = try inferType(exp, requiresOPPType: false)
+        //cases may be used only once, otherwise language not deterministic
+        var usedCases = [Case]()
+        try cases.forEach {
+            guard !usedCases.contains($0.case) else {
+                throw TypeCheckerError.invalidSwitch(stm: stm, message: "duplicate usage of '\($0.case.show())'")
+            }
+            
+            usedCases.append($0.case)
+            let isLastCase = usedCases.count == cases.count
+            
+            let environmentCopy = environment
+
+            var deltaCopy = delta
+            var unwrappedType = try $0.case.unwrappedType(from: type, inEnvironment: environment)
+            if let requiredType = $0.idMaybeTyped.type {
+                try makeType(&unwrappedType, matchRequiredType: requiredType, withDelta: &deltaCopy, errorForFailure: .assignmentFailed(stm: stm, actual: unwrappedType, expected: requiredType))
+            }
+            environment.pushContext()
+            try environment.applyDelta(deltaCopy)
+            try environment.addToCurrentContext($0.idMaybeTyped.id, type: unwrappedType)
+            try checkStms($0.stms, functionSignature: functionSignature)
+            environment.popContext()
+            
+            //every case requires a separate routine for the following statements as the environment may change differently per case
+            //if is last case do not restore environment or check following statements, as this is performed by default at the end of the function
+            if !isLastCase {
+                try checkStms(followingStatements, functionSignature: functionSignature)
+                environment = environmentCopy
+            }
+        }
+        
     case let .return(exp):
         var (expType, envDelta) = try inferType(exp, requiresOPPType: functionSignature.isExposed)
         try makeType(&expType, matchRequiredType: functionSignature.returnType, withDelta: &envDelta, errorForFailure: .invalidReturnType(actual: expType, expected: functionSignature.returnType))

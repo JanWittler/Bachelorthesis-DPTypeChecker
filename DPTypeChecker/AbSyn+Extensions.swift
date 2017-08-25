@@ -138,6 +138,29 @@ extension Case {
     }
 }
 
+extension SwitchCase {
+    var idMaybeTyped: IdMaybeTyped {
+        switch self {
+        case let .default(idMaybeTyped, _, _):
+            return idMaybeTyped
+        }
+    }
+    
+    var `case`: Case {
+        switch self {
+        case let .default(_, `case`, _):
+            return `case`
+        }
+    }
+    
+    var stms: [Stm] {
+        switch self {
+        case let .default(_, _, stms):
+            return stms
+        }
+    }
+}
+
 //MARK:- subtyping
 
 extension Type {
@@ -396,7 +419,7 @@ private extension CoreType {
     }
 }
 
-//MARK:- type comparison
+//MARK:- comparison
 
 extension Type: Equatable {
     public static func ==(lhs: Type, rhs: Type) -> Bool {
@@ -436,6 +459,27 @@ extension Generics: Equatable {
             return t1 == t2
         default:
             return false
+        }
+    }
+}
+
+extension Case: Equatable {
+    public static func ==(lhs: Case, rhs: Case) -> Bool {
+        switch lhs {
+        case .inl:
+            switch rhs {
+            case .inl:
+                return true
+            case .inr:
+                return false
+            }
+        case .inr:
+            switch rhs {
+            case .inl:
+                return false
+            case .inr:
+                return true
+            }
         }
     }
 }
