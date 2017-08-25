@@ -191,6 +191,19 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
         if let elseStms = `else`.stms {
             //if and else branch must be evaluated independently of another to correctly manage environment
             let currentEnvironment = environment
+            
+            //since `handleIfCondition` may scale the delta which is not needed for else, just get the expression from the condition and type-check it without scaling
+            let exp: Exp
+            switch condition {
+            case let .bool(e):
+                exp = e
+            case let .case(_, _, e):
+                exp = e
+            case let .unfold(_, _, e):
+                exp = e
+            }
+            let (_, delta) = try inferType(exp, requiresOPPType: false)
+            try environment.applyDelta(delta)
             environment.pushContext()
             try checkStms(elseStms, functionSignature: functionSignature)
             environment.popContext()
