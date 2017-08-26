@@ -1,3 +1,6 @@
+# This Makefile was originally used to generated the lexer, parser and Swift interfaces whenever the Grammar.cf file was changed.
+# Since the grammar is now fixed and lexer, parser and Swift interfaces are integrated in the project, this file is not needed anymore but kept for legacy reasons.
+
 cToSwiftFolder := ./BNFC_CToSwift/
 grammar := Grammar.cf
 

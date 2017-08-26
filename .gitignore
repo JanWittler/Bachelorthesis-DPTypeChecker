@@ -1,18 +1,21 @@
-DPTypeChecker/AbstractSyntax.swift
-DPTypeChecker/Parser.swift
 CGrammar/*.o
 CGrammar/*.l
 CGrammar/*.y
 CGrammar/*.bak
-CGrammar/Absyn.h
-CGrammar/Absyn.c
 CGrammar/Printer.h
 CGrammar/Printer.c
-CGrammar/Parser.h
-CGrammar/Parser.c
-CGrammar/Lexer.c
 CGrammar/Skeleton.h
 CGrammar/Skeleton.c
 CGrammar/Test.c
 CGrammar/TestGrammar
 CGrammar/Makefile
+
+# uncomment again if grammar may get altered in future work
+# DPTypeChecker/AbstractSyntax.swift
+# DPTypeChecker/Parser.swift
+# CGrammar/Absyn.h
+# CGrammar/Absyn.c
+# CGrammar/Parser.h
+# CGrammar/Parser.c
+# CGrammar/Lexer.c
+
