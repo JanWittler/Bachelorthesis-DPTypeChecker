@@ -294,11 +294,26 @@ private func inferType(_ exp: Exp, requiresOPPType: Bool) throws -> (Type, Envir
     case .nothing:
         return (.default(try environment.coreTypeForId(optionalTypeIdent), 1), Environment.Delta())
     case let .id(id):
-        let type = try environment.lookup(id)
-        let returnType = Type.default(type.coreType, 1)
-        var delta = Environment.Delta()
-        delta.updateUsageCount(for: id, delta: 1)
-        return (returnType, delta)
+        do {
+            let type = try environment.lookup(id)
+            let returnType = Type.default(type.coreType, 1)
+            var delta = Environment.Delta()
+            delta.updateUsageCount(for: id, delta: 1)
+            return (returnType, delta)
+        }
+        // if it is not a variable, maybe it is a function called without argument thus the function type is preserved
+        // if it is not a function, return the original variable not found error
+        catch let TypeCheckerError.variableNotFound(errorId) {
+            do {
+                let (args, returnType) = try environment.lookupFunction(id)
+                let function = Type.exponential(.function(args, returnType))
+                return (function, Environment.Delta())
+            }
+            catch {
+                throw TypeCheckerError.variableNotFound(errorId)
+            }
+        }
+        
     case let .pair(e1, e2):
         var (type1, delta1) = try inferType(e1, requiresOPPType: requiresOPPType)
         var (type2, delta2) = try inferType(e2, requiresOPPType: requiresOPPType)
