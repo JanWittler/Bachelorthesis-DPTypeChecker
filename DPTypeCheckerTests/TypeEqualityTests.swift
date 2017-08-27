@@ -9,7 +9,7 @@
 import XCTest
 
 class TypeEqualityTests: XCTestCase {
-    func testreplicationIndexInequality() {
+    func testReplicationIndexEquality() {
         let coreType = CoreType.base(.unit)
         let t1 = Type.default(coreType, .infinity)
         let t2 = Type.exponential(coreType)

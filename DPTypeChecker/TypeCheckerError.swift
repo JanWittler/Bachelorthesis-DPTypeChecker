@@ -21,7 +21,7 @@ public enum TypeCheckerError: Error {
     case invalidVariableAccess(Id)
     case assignmentFailed(stm: Stm, actual: Type, expected: Type)
     case missingReturn(function: Id)
-    case invalidReturnType(actual: Type, expected: Type)
+    case invalidReturnType(function: Id, actual: Type, expected: Type)
     case splitFailed(stm: Stm, actual: Type)
     case caseApplicationFailed(case: Case, actual: Type)
     case invalidIfCondition(stm: Stm, message: String)
@@ -71,8 +71,8 @@ extension TypeCheckerError: CustomStringConvertible {
             "actual: \(actual)"
         case let .missingReturn(function: id):
             return "missing return statement in function `\(id.value)`"
-        case let .invalidReturnType(actual: actual, expected: expected):
-            return "invalid return type in function\n" +
+        case let .invalidReturnType(function: id, actual: actual, expected: expected):
+            return "invalid return type in function `\(id.value)`\n" +
                 "expected: \(expected)\n" +
             "actual: \(actual)\n"
         case let .splitFailed(stm, actual):

@@ -9,7 +9,7 @@
 import XCTest
 
 class OPPTypeTests: XCTestCase {
-    func testreplicationIndexOPPType() {
+    func testReplicationIndexOPPType() {
         let coreType = CoreType.base(.int)
         let environment = Environment()
         let t1 = Type.default(coreType, 1)

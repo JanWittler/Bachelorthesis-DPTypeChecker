@@ -9,6 +9,7 @@
 import Foundation
 
 private struct FunctionSignature {
+    let id: Id
     let argumentTypes: [Type]
     let returnType: Type
     let isExposed: Bool
@@ -82,7 +83,7 @@ private func checkFunction(id: Id, args: [Arg], returnType: Type, stms: [Stm], i
     }
     environment.pushContext()
     try addArgsToCurrentContext(args)
-    let signature = FunctionSignature(argumentTypes: args.map({ $0.type }), returnType: returnType, isExposed: isExposed)
+    let signature = FunctionSignature(id: id, argumentTypes: args.map({ $0.type }), returnType: returnType, isExposed: isExposed)
     try checkStms(stms, functionSignature: signature)
 }
 
@@ -252,7 +253,7 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
         
     case let .return(exp):
         var (expType, envDelta) = try inferType(exp, requiresOPPType: functionSignature.isExposed)
-        try makeType(&expType, matchRequiredType: functionSignature.returnType, withDelta: &envDelta, errorForFailure: .invalidReturnType(actual: expType, expected: functionSignature.returnType))
+        try makeType(&expType, matchRequiredType: functionSignature.returnType, withDelta: &envDelta, errorForFailure: .invalidReturnType(function: functionSignature.id, actual: expType, expected: functionSignature.returnType))
         try environment.applyDelta(envDelta)
         // stop typechecking of this branch as soon as a return is found since following statements will never be executed
         return
