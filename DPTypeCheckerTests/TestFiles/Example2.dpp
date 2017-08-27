@@ -1,0 +1,25 @@
+//System for Non-Tracking Web Analytics
+
+//helper stubs
+func p_addToDatabase(data: Int!inf) -> Unit!inf {
+	return ()
+}
+
+func p_storedDataPlusNoise() -> [Int!inf]!inf {
+	return []
+}
+//end helper stubs
+
+exposed func publisher() -> ((([Int!1]!1) -> Unit!inf)!inf, (() -> [Int!inf]!inf)!inf)!inf {
+	return (p_collectData, p_storedDataPlusNoise)
+}
+
+func p_collectData(data: [Int!1]!1) -> Unit!inf {
+	if (let (x, xs) = unfold data) {
+		let y = p_addToDatabase(x)
+		return p_collectData(xs)
+	}
+	else {
+		return ()
+	}
+}

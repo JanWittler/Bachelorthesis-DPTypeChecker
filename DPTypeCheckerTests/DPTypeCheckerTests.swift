@@ -64,13 +64,18 @@ class DPTypeCheckerTests: XCTestCase {
         testFiles(files)
     }
     
+    func testExample2() {
+        testFile("Example2.dpp", isValid: false)
+        testFile("Example2_Malicious.dpp")
+    }
+    
 //MARK: helper methods
     
     private func testFiles(_ files: [String]) {
         files.forEach { testFile($0) }
     }
     
-    private func testFile(_ file: String) {
+    private func testFile(_ file: String, isValid: Bool = true) {
         guard let path = path(forResource: file, ofType: nil) else {
             XCTFail("file for \(file) not found")
             return
@@ -79,7 +84,12 @@ class DPTypeCheckerTests: XCTestCase {
             XCTFail("failed to parse \(file)")
             return
         }
-        XCTAssertNoThrow(try typeCheck(tree), "type check of \(file) failed")
+        if isValid {
+            XCTAssertNoThrow(try typeCheck(tree), "type check of \(file) failed")
+        }
+        else {
+            XCTAssertThrowsError(try typeCheck(tree), "type check of \(file) succeeded but file is invalid")
+        }
     }
     
     private func path(forResource resource: String?, ofType type: String?) -> String? {
