@@ -157,10 +157,10 @@ private func checkStm(_ stm: Stm, functionSignature: FunctionSignature) throws {
             throw TypeCheckerError.splitFailed(stm: stm, actual: expType)
         }
         
-        //fix unknown types and get scaling factor for each pair element
+        //resolve generic types to their annotated types, if any, and get scaling factor for each pair element
         let fixedTypesAndFactors = try [(type1, idMaybeTyped1), (type2, idMaybeTyped2)].map { (type, idMaybeTyped) -> (Type, ReplicationIndex) in
             if let requiredType = idMaybeTyped.type {
-                //use the core type of the required type to solve for `unknown` types but keep the old replication index since this gets recomputed when variable is added to environment
+                //use the core type of the required type to resolve generic types but keep the old replication index since this may get recomputed when variable is added to the environment
                 let resultType = Type.default(requiredType.coreType, type.replicationIndex)
                 guard let factor = try type.scalingFactorToConvertToType(requiredType, inEnvironment: environment) else {
                     throw TypeCheckerError.assignmentFailed(stm: stm, actual: type, expected: requiredType)
@@ -220,7 +220,7 @@ private func checkStm(_ stm: Stm, functionSignature: FunctionSignature) throws {
         let originalEnvironment = environment
         var createdEnvironments = [Environment]()
         let (type, delta) = try inferType(exp, requiresOPPType: false)
-        //cases may be used only once, otherwise language not deterministic
+        //cases may be used only once, otherwise language is not deterministic
         var usedCases = [Case]()
         try cases.forEach {
             guard !usedCases.contains($0.case) else {
@@ -250,8 +250,6 @@ private func checkStm(_ stm: Stm, functionSignature: FunctionSignature) throws {
         var (expType, envDelta) = try inferType(exp, requiresOPPType: functionSignature.isExposed)
         try makeType(&expType, matchRequiredType: functionSignature.returnType, withDelta: &envDelta, errorForFailure: .invalidReturnType(function: functionSignature.id, actual: expType, expected: functionSignature.returnType))
         try environment.applyDelta(envDelta)
-        // stop typechecking of this branch as soon as a return is found since following statements will never be executed
-        return
         
     case let .assert(assertion):
         try checkAssertion(assertion)
