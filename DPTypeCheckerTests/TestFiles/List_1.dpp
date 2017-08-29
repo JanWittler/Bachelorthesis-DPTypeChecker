@@ -7,6 +7,7 @@ func testList_1() -> Unit!1 {
         assertTypeEqual(xs, [Int!1]!1)
         assertTypeEqual(list, [Int!1]!9)
     }
+    assertTypeEqual(list, [Int!1]!9)
 
     if (let (x: Int!1, xs: [Int!1]!2) = unfold list) {
         assertTypeEqual(x, Int!1)
@@ -19,6 +20,10 @@ func testList_1() -> Unit!1 {
             assertTypeEqual(xs, [Int!1]!0)
             return ()
         }
+
+        assertTypeEqual(xs, [Int!1]!0)
     }
+
+    assertTypeEqual(list, [Int!1]!7)
     return ()
 }

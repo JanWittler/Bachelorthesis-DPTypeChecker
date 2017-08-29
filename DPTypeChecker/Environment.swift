@@ -84,7 +84,7 @@ internal struct Environment {
      */
     private struct Context {
         /// The variables stored by the context, together with their type and usage count.
-        private var values : [Id : (Type, ReplicationIndex)] = [:]
+        fileprivate var values : [Id : (Type, ReplicationIndex)] = [:]
         
         /**
          Adds a variable with the give type and a usage count of `0` to the context.
@@ -362,5 +362,24 @@ internal struct Environment {
             index -= 1
         }
         throw TypeCheckerError.variableNotFound(id)
+    }
+    
+    /**
+     Adjustes the usage counts in all contexts of the current environment by taking the maximum of the own usage count for each variable and the usage count stored in the given environment. The given environment is expected to be a copy of the current environment and must match the number of contexts.
+     - parameters:
+       - environment: The environment to adjust to.
+     */
+    mutating func adjustToTakeHigherUsageCounts(from environment: Environment) {
+        precondition(environment.contexts.count == contexts.count, "both environments must match their context count")
+        
+        for index in 0..<contexts.count {
+            var context = contexts[index]
+            context.values.forEach {
+                if let otherUsageCount = try? environment.contexts[index].lookupUsageCount($0) {
+                    context.values[$0] = ($1.0, max(otherUsageCount, $1.1))
+                }
+            }
+            contexts[index] = context
+        }
     }
 }

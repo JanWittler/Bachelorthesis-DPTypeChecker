@@ -127,25 +127,21 @@ private func containsReturnStatement(_ stms: [Stm]) -> Bool {
  Type-checks the given statements under the current environment. Throws an error if the type-check failed.
  - parameters:
    - stms: The statements to type-check.
- - functionSignature: The signature of the function to which the given statements belong.
+   - functionSignature: The signature of the function to which the given statements belong.
  - throws: Throws an instance of `TypeCheckerError` if the type-check failed.
  */
 private func checkStms(_ stms: [Stm], functionSignature: FunctionSignature) throws {
-    // calling the check statements recursively instead of iteratively is done to have correct behavior on branching (if-else) since the environment may get altered differently in the branches, thus type-checking must be performed for all branches independently (which is easier to achieve with recursion).
-    try checkStm(stms.first, functionSignature: functionSignature, followingStatements: Array(stms.dropFirst()))
+    try stms.forEach { try checkStm($0, functionSignature: functionSignature) }
 }
 
 /**
- Type-checks first the given statement and then the given following statements under the current environment. Throws an error if the type-check failed.
+ Type-checks the given statement under the current environment. Throws an error if the type-check failed.
  - parameters:
-   - stm: The statement to type-check. If this is `nil`, the execution of this method is stopped.
-   - functionSignature: The signature of the function to which the given statement and following statements belong.
-   - followingStatements: The statements that are type-checked after `stm` is type-checked.
+   - stm: The statement to type-check.
+   - functionSignature: The signature of the function to which the given statement belongs.
  - throws: Throws an instance of `TypeCheckerError` if the type-check failed.
  */
-private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followingStatements: [Stm]) throws {
-    guard let stm = stm else { return }
-    
+private func checkStm(_ stm: Stm, functionSignature: FunctionSignature) throws {
     switch stm {
     case let .init(idMaybeTyped, exp):
         var (expType, envDelta) = try inferType(exp, requiresOPPType: false)
@@ -186,9 +182,9 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
         try environment.addToCurrentContext(id2, type: idMaybeTyped2.type ?? .default(type2.coreType, type2.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
         
     case let .ifElse(condition, ifStms, `else`):
+        var elseEnvironment: Environment?
         if let elseStms = `else`.stms {
-            //if and else branch must be evaluated independently of another to correctly manage environment
-            let currentEnvironment = environment
+            let environmentCopy = environment
             
             //since `handleIfCondition` may scale the delta which is not needed for else, just get the expression from the condition and type-check it without scaling
             let exp: Exp
@@ -201,13 +197,13 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
                 exp = e
             }
             let (_, delta) = try inferType(exp, requiresOPPType: false)
-            try environment.applyDelta(delta)
             environment.pushContext()
+            try environment.applyDelta(delta)
             try checkStms(elseStms, functionSignature: functionSignature)
             environment.popContext()
-            try checkStms(followingStatements, functionSignature: functionSignature)
+            elseEnvironment = environment
             //restore the environment that existed before typechecking the else branch to typecheck the if branch with the old environment
-            environment = currentEnvironment
+            environment = environmentCopy
         }
         
         environment.pushContext()
@@ -215,7 +211,14 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
         try checkStms(ifStms, functionSignature: functionSignature)
         environment.popContext()
         
+        if let elseEnvironment = elseEnvironment {
+            //adjust the environment to have the higher usage counts of both branches
+            environment.adjustToTakeHigherUsageCounts(from: elseEnvironment)
+        }
+        
     case let .switch(exp, cases):
+        let originalEnvironment = environment
+        var createdEnvironments = [Environment]()
         let (type, delta) = try inferType(exp, requiresOPPType: false)
         //cases may be used only once, otherwise language not deterministic
         var usedCases = [Case]()
@@ -223,11 +226,7 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
             guard !usedCases.contains($0.case) else {
                 throw TypeCheckerError.invalidSwitch(stm: stm, message: "duplicate usage of '\($0.case.show())'")
             }
-            
             usedCases.append($0.case)
-            let isLastCase = usedCases.count == cases.count
-            
-            let environmentCopy = environment
 
             var deltaCopy = delta
             var unwrappedType = try $0.case.unwrappedType(from: type, inEnvironment: environment)
@@ -240,13 +239,12 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
             try checkStms($0.stms, functionSignature: functionSignature)
             environment.popContext()
             
-            //every case requires a separate routine for the following statements as the environment may change differently per case
-            //if is last case do not restore environment or check following statements, as this is performed by default at the end of the function
-            if !isLastCase {
-                try checkStms(followingStatements, functionSignature: functionSignature)
-                environment = environmentCopy
-            }
+            createdEnvironments.append(environment)
+            //reset to original environment for next case
+            environment = originalEnvironment
         }
+        //adjust the environment to have the higher usage counts from any of the created environments
+        createdEnvironments.forEach { environment.adjustToTakeHigherUsageCounts(from: $0) }
         
     case let .return(exp):
         var (expType, envDelta) = try inferType(exp, requiresOPPType: functionSignature.isExposed)
@@ -258,8 +256,6 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
     case let .assert(assertion):
         try checkAssertion(assertion)
     }
-
-    try checkStms(followingStatements, functionSignature: functionSignature)
 }
 
 /**
