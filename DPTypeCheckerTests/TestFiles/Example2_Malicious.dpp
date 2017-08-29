@@ -1,4 +1,4 @@
-//System for Non-Tracking Web Analytics
+//Malicious Publisher in System for Non-Tracking Web Analytics
 
 //helper stubs
 func p_addToDatabase(data: Int!inf) -> Unit!inf {

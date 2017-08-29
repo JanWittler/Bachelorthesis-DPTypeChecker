@@ -69,7 +69,6 @@ func c(key_a: SKey!inf, key_b: SKey!inf, encValues: (Int!inf, Int!inf)!inf) -> O
         if (case let q2_b = inr q_b) {
             let query = q2_a + q2_b
             return Just(add_noise(query))
-
         }
     }
     return Nothing
