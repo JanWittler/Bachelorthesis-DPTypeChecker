@@ -6,7 +6,7 @@ func testSplit_1(x: Int!6) -> Unit!1 {
     assertTypeEqual(x, Int!0)
     assertTypeEqual(pair, (Int!1, Unit!1)!1)
     assertTypeEqual(a, Int!5)
-    assertTypeEqual(b, Unit!5)
+    assertTypeEqual(b, Unit!2)
 
     return b
 }

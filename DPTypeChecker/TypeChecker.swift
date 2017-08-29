@@ -174,19 +174,16 @@ private func checkStm(_ stm: Stm?, functionSignature: FunctionSignature, followi
             return (type, 1)
         }
         
-        let factor1: ReplicationIndex
-        let factor2: ReplicationIndex
-        (type1, factor1) = fixedTypesAndFactors[0]
-        (type2, factor2) = fixedTypesAndFactors[1]
-        let maxFactor = max(factor1, factor2)
+        type1 = fixedTypesAndFactors[0].0
+        type2 = fixedTypesAndFactors[1].0
+        let maxFactor = fixedTypesAndFactors.map { $0.1 }.max()!
         envDelta.scale(by: maxFactor)
-        //since both variables are scaled by `maxFactor` it would be wrong to use the annotated types, rather we need to compute the scaled type from the inferred type
-        //note: if the `maxFactor` is equal to the factor of the component, the scaled type will match the annotated type
         try environment.applyDelta(envDelta)
+        
         let id1 = idMaybeTyped1.id
         let id2 = idMaybeTyped2.id
-        try environment.addToCurrentContext(id1, type: .default(type1.coreType, type1.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
-        try environment.addToCurrentContext(id2, type: .default(type2.coreType, type2.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
+        try environment.addToCurrentContext(id1, type: idMaybeTyped1.type ?? .default(type1.coreType, type1.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
+        try environment.addToCurrentContext(id2, type: idMaybeTyped2.type ?? .default(type2.coreType, type2.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
         
     case let .ifElse(condition, ifStms, `else`):
         if let elseStms = `else`.stms {
@@ -535,19 +532,16 @@ private func handleIfCondition(_ condition: IfCond, inStatement stm: Stm) throws
             return (type, 1)
         }
         
-        let factor1: ReplicationIndex
-        let factor2: ReplicationIndex
-        (elemType, factor1) = fixedTypesAndFactors[0]
-        (listType, factor2) = fixedTypesAndFactors[1]
-        let maxFactor = max(factor1, factor2)
+        elemType = fixedTypesAndFactors[0].0
+        listType = fixedTypesAndFactors[1].0
+        let maxFactor = fixedTypesAndFactors.map { $0.1 }.max()!
         delta.scale(by: maxFactor)
-        //since both variables are scaled by `maxFactor` it would be wrong to use the annotated types, rather we need to compute the scaled type from the inferred type
-        //note: if the `maxFactor` is equal to the factor of the component, the scaled type will match the annotated type
         try environment.applyDelta(delta)
+        
         let head = headIdMaybeTyped.id
         let tail = tailIdMaybeTyped.id
-        try environment.addToCurrentContext(head, type: .default(elemType.coreType, elemType.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
-        try environment.addToCurrentContext(tail, type: .default(listType.coreType, listType.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
+        try environment.addToCurrentContext(head, type: headIdMaybeTyped.type ?? .default(elemType.coreType, elemType.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
+        try environment.addToCurrentContext(tail, type: tailIdMaybeTyped.type ?? .default(listType.coreType, listType.replicationIndex.multiplying(by: maxFactor, withRoundingMode: .forTypeConstruction)))
     }
 }
 
