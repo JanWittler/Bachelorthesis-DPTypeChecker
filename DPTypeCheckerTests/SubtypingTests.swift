@@ -8,6 +8,9 @@
 
 import XCTest
 
+/**
+ A class to test the subtyping relation evaluation.
+ */
 class SubtypingTests: XCTestCase {
     func testSubtypeReplicationIndex() {
         let coreType = CoreType.base(.int)

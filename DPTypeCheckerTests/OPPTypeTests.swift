@@ -8,6 +8,9 @@
 
 import XCTest
 
+/**
+ A class to test the opponent type check.
+ */
 class OPPTypeTests: XCTestCase {
     func testReplicationIndexOPPType() {
         let coreType = CoreType.base(.int)

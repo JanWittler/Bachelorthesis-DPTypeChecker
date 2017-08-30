@@ -8,6 +8,10 @@
 
 import XCTest
 
+/**
+ A class to test all integration tests. A test is suceeded if the file was successfully parsed and type-checked.
+ - important: Due to some ocassional occuring bridging errors from C anonymous enums to Swift integer values, it may happen that a test fails at the stage of bridging the abstract syntax to Swift, even though it may pass in another run. If this behavior remains, it may help to clean the build folder using `Cmd + Alt + Shift + K` and run the tests again.
+ */
 class DPTypeCheckerTests: XCTestCase {
     func testCoreTypes() {
         let files = ["CoreTypes.dpp"]

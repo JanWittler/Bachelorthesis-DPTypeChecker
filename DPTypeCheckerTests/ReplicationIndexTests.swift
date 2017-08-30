@@ -8,6 +8,9 @@
 
 import XCTest
 
+/**
+ A class to test the behavior of the `ReplicationIndex` structure on arithmetic operations.
+ */
 class ReplicationIndexTests: XCTestCase {
     let a: ReplicationIndex = 10
     let b: ReplicationIndex = 5

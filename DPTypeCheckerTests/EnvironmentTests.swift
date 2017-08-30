@@ -8,6 +8,9 @@
 
 import XCTest
 
+/**
+ A class to test the behavior of the environment.
+ */
 class EnvironmentTests: XCTestCase {
     func testDeltaEmpty() {
         var delta = Environment.Delta()

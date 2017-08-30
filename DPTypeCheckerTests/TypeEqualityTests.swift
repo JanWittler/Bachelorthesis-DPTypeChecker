@@ -8,6 +8,9 @@
 
 import XCTest
 
+/**
+ A class to test the equality operator on types.
+ */
 class TypeEqualityTests: XCTestCase {
     func testReplicationIndexEquality() {
         let coreType = CoreType.base(.unit)
